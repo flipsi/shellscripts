@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Set the keyboard backlight without root permissions
+
+
+# get current keyboard brightness from UPower
+current_state=$(dbus-send --type=method_call --print-reply=literal --system \
+--dest="org.freedesktop.UPower" /org/freedesktop/UPower/KbdBacklight org.freedesktop.UPower.KbdBacklight.GetBrightness)
+# strip leading 9 characters "   int32 "
+current_state=${current_state:9}
+
+
+
+increase() {
+    # get maximum keyboard brightness from UPower
+    max_brightness=$(dbus-send --type=method_call --print-reply=literal --system \
+    --dest="org.freedesktop.UPower" /org/freedesktop/UPower/KbdBacklight org.freedesktop.UPower.KbdBacklight.GetMaxBrightness)
+    # strip leading 9 characters "   int32 "
+    max_brightness=${max_brightness:9}
+    # if the current keyboard brightness is less than max, increment brightness by one
+    if [ $current_state -lt $max_brightness ] ; then 
+        dbus-send --type=method_call --print-reply=literal --system \
+        --dest="org.freedesktop.UPower" /org/freedesktop/UPower/KbdBacklight org.freedesktop.UPower.KbdBacklight.SetBrightness \
+        int32:$((current_state+1))
+        notify-send "Keyboard brightness reset to $((current_state+1))"
+        else
+    # if the keyboard brightness is already at maximum, complain
+            notify-send "Keyboard brightness already at maximum"
+    fi
+}
+
+
+decrease() {
+    min_brightness=0
+    # if the current keyboard brightness is greater than zero, decrement brightness by one
+    if [ $current_state -gt $min_brightness ] ; then 
+        dbus-send --type=method_call --print-reply=literal --system \
+        --dest="org.freedesktop.UPower" /org/freedesktop/UPower/KbdBacklight org.freedesktop.UPower.KbdBacklight.SetBrightness \
+        int32:$((current_state-1))
+        notify-send "Keyboard brightness reset to $((current_state-1))"
+        else
+    # if the keyboard brightness is already at zero, complain
+            notify-send "Keyboard brightness already at zero"
+    fi
+}
+
+
+help_msg() {
+cat <<-EOF
+`awk  'FNR==3 {print gensub("# ", "", 1)}' "$0"`
+Usage: keyboard-backlight ( up | down )
+EOF
+}
+
+
+
+if [ "$#" -ne 1 ]; then
+    help_msg
+else
+    case $1 in
+        up )
+             increase
+        exit ;;
+        down )
+             decrease
+        exit ;;
+        * )
+            help_msg
+        exit ;;
+esac
+fi
+
+

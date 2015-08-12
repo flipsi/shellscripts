@@ -1,0 +1,28 @@
+#!/bin/bash
+# /usr/local/bin/brighten (MagicMint) M0530
+# Increase or decrease the brightness of the screen
+help_msg() {
+cat <<-EOF
+`awk  'FNR==3 {print gensub("# ", "", 1)}' "$0"`
+Usage: brighten [ -d | --dec ] | [ -h | --help ]
+EOF
+}
+case $1 in
+ -h | --help )
+  help_msg
+  exit
+ ;;
+ -d | --dec )
+  pkexec /usr/lib/gnome-settings-daemon/gsd-backlight-helper \
+ --set-brightness $(expr \
+ $(/usr/lib/gnome-settings-daemon/gsd-backlight-helper --get-brightness) - 25)
+ ;;
+ *) pkexec /usr/lib/gnome-settings-daemon/gsd-backlight-helper \
+ --set-brightness $(expr \
+ $(/usr/lib/gnome-settings-daemon/gsd-backlight-helper --get-brightness) + 25)
+ ;;
+esac
+let BRIGHTNESS=$(/usr/lib/gnome-settings-daemon/gsd-backlight-helper --get-brightness)*10
+MESSAGE="Brightness at $BRIGHTNESS%"
+#notify-send "$MESSAGE" --icon=dialog-info
+#end of script

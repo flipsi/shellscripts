@@ -1,0 +1,23 @@
+#!/bin/bash
+# Author: Philipp Moers <soziflip gmail com>
+# This script disables an xinput device if it is enabled and vice versa
+
+# adjust this to your needs
+DEVICE="PS/2 Logitech Wheel Mouse"
+
+
+# ---------------------------------------------------------------------
+
+# get old state
+STATE=$(xinput --list-props "$DEVICE" | grep "Device Enabled" | cut -f3)
+
+# calculate next state
+if [ $STATE -eq 1 ]; then
+    NEXTSTATE=0
+else
+    NEXTSTATE=1
+fi
+
+# set next state
+xinput --set-prop "$DEVICE" "Device Enabled" $NEXTSTATE
+
