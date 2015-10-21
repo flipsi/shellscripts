@@ -1,0 +1,39 @@
+#!/bin/bash
+
+help_msg() {
+cat <<-EOF
+Usage: xfce4-terminal-fontsize ( increase | decrease )
+EOF
+}
+
+OPERATOR=""
+
+if [ "$#" -ne 1 ]; then
+    help_msg
+else
+    case $1 in
+        increase )
+            export OPERATOR="+"
+        ;;
+        decrease )
+            export OPERATOR="-"
+        ;;
+        * )
+            help_msg
+        exit ;;
+esac
+fi
+
+echo $OPERATOR
+
+if [[ -n $OPERATOR ]]; then
+    echo 'jaaaj'
+    FILE="${HOME}/.config/xfce4/terminal/terminalrc"
+
+    SIZE=`grep 'FontName' $FILE | cut -d' ' -f 2`
+    NEWSIZE=$((SIZE $OPERATOR 1))
+
+    REGEXPR="s/FontName.*/FontName=Monospace ${NEWSIZE}/g"
+    sed -i "${REGEXPR}" $FILE
+fi
+
