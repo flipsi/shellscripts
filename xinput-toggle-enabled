@@ -2,8 +2,17 @@
 # Author: Philipp Moers <soziflip gmail com>
 # This script disables an xinput device if it is enabled and vice versa
 
-# adjust this to your needs
-DEVICE="PS/2 Logitech Wheel Mouse"
+
+if [ -n "$1" ]; then
+    DEVICE=$1
+else
+    # DEVICE="FocalTechPS/2 FocalTech FocalTech Touchpad"
+    DEVICE=`xinput list --name-only | grep -i touchpad`
+fi
+
+
+#DEVICE="PS/2 Logitech Wheel Mouse"
+#DEVICE="PS/2 FocalTech FocalTech Touchpad in mouse emulation mode"
 
 
 # ---------------------------------------------------------------------
