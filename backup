@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Author: Philipp Moers <soziflip gmail com>
+
+# Automagical Backups
+
+
+# Note: I use rsync for one way backups. 
+#       To sync directories, unison may be a better approach.
+
+
+# where to log what happened
+LOGFILE="$HOME/.backup.log"
+
+# path to external hdd
+EXTERNALHDD="/mnt/extern"
+
+# create logfile if non-existent or touch it to mark execution of this script
+touch "${LOGFILE}"
+echo -e "\nRunning backup script at " $(date) >>${LOGFILE}
+
+# host: obelix
+if [[ $(hostname) = "obelix" ]]; then
+
+    # external hdd connected and mounted?
+    if mountpoint -q "${EXTERNALHDD}"; then
+
+        # then start backup
+
+        # music from external hdd to local hdd
+        rsync -ruv "${EXTERNALHDD}/data/music" "${HOME}/common/backup" >>${LOGFILE} 2>&1
+
+    fi
+fi
+
+echo -e "Done.\n" >>${LOGFILE}
