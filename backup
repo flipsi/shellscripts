@@ -21,7 +21,9 @@ EXTERNALHDD="/mnt/extern"
 
 # create logfile if non-existent or touch it to mark execution of this script
 touch "${LOGFILE}"
-echo -e "\nRunning backup script at " $(date) >>${LOGFILE}
+echo -e "\n\n\n" >>${LOGFILE}
+echo -e "###############################################################################" >>${LOGFILE}
+echo -e "\nRunning backup script at " $(date) "\n">>${LOGFILE}
 
 
 # host: obelix
@@ -44,6 +46,8 @@ if [[ $(hostname) = "obelix" ]]; then
         # music from external hdd to local hdd
         rsync -ruv "${EXTERNALHDD}/data/music" "${HOME}/common/backup" >>${LOGFILE} 2>&1
 
+    else
+        echo -e "External HDD not found." >>${LOGFILE}
     fi
 fi
 
@@ -77,7 +81,9 @@ if [[ $(hostname) = "asterix" ]]; then
 
         # TODO what about src-my?
 
+    else
+        echo -e "External HDD not found." >>${LOGFILE}
     fi
 fi
 
-echo -e "Done.\n" >>${LOGFILE}
+echo -e "Done.\n\n" >>${LOGFILE}
