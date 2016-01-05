@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# poweroff the computer after the currently played thing finished
+
+# for now, we only check MPD. this may change in the future
+
+mpc current --wait && sudo poweroff
