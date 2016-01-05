@@ -6,10 +6,15 @@
 
 if test (hostname) = 'obelix'
     if xrandr | grep 'VGA-0 connected'
-        sleep 7
+        sleep 5
         xrandr --output VGA-0 --auto --below LVDS-0
         i3-msg restart
         feh --bg-scale ~/.i3/wallpaper
         echo 'Setup completed.'
+    end
+
+    # also start mpd, if music hdd is connected
+    if mountpoint -q /mnt/extern
+        mpd
     end
 end
