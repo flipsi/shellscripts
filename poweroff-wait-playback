@@ -3,5 +3,5 @@
 # poweroff the computer after the currently played thing finished
 
 # for now, we only check MPD. this may change in the future
-
-mpc current --wait && sudo poweroff
+# also, we crop the playlist, because otherwise next song may start (crossover)
+mpc crop && mpc current --wait && sudo poweroff
