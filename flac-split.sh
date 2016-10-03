@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# In a directory, containing a flac (or ape) and a cue file,
-# split the flac in multiple files.
+# In a directory, containing a flac/ape/wv file with multiple tracks (album)
+# and a cue file, split it in multiple flac files.
 
 # Author: Philipp Moers <soziflip@gmail.com>
 
@@ -36,6 +36,9 @@ if [[ -z "$FILE_TO_SPLIT" ]]; then
 fi
 if [[ ! -f "$FILE_TO_SPLIT" ]]; then
     FILE_TO_SPLIT=$(basename -z *.ape)
+fi
+if [[ ! -f "$FILE_TO_SPLIT" ]]; then
+    FILE_TO_SPLIT=$(basename -z *.wv)
 fi
 if [[ ! -f "$FILE_TO_SPLIT" ]]; then
     (>&2 echo 'No (or more than one) flac or ape file found.')

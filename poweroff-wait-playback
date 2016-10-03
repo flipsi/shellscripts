@@ -4,4 +4,4 @@
 
 # for now, we only check MPD. this may change in the future
 # also, we crop the playlist, because otherwise next song may start (crossover)
-mpc crop && mpc current --wait && sudo poweroff
+mpc single on && mpc current --wait && sudo poweroff
