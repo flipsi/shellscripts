@@ -10,3 +10,4 @@ find $wallpaper_dir -regex '.*\.\(png\|jpg\|jpeg\)' \
 | sort -R | head -n1 \
 )
 feh --bg-scale "$wallpaper"
+echo "$wallpaper" > /tmp/wallpaper.txt
