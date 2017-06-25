@@ -29,6 +29,8 @@ function setWallpaperSymlinkI3() {
 }
 
 chooseWallpaper
+echo "$wallpaper"
+echo "$wallpaper" > /tmp/wallpaper.txt
 setWallpaper
 if [[ $(whoami) = 'sflip' ]]; then
    setWallpaperSymlinkI3
