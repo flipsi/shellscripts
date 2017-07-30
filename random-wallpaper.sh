@@ -1,6 +1,13 @@
 #!/bin/bash
 
 wallpaper_dir=~/img-wallpaper
+file_cur=/tmp/random-wallpaper.txt
+file_log=/tmp/random-wallpaper.log
+
+if [ "$1" = '--backwards' ]; then
+   BACKWARDS=true
+fi
+
 
 
 function chooseWallpaper() {
@@ -28,9 +35,19 @@ function setWallpaperSymlinkI3() {
    fi
 }
 
-chooseWallpaper
+
+if [[ -z $BACKWARDS ]]; then
+   chooseWallpaper
+   echo "$wallpaper" >> "${file_log}"
+else
+   n=$(grep --line-number "$(cat "${file_cur}")"  "${file_log}" | cut -d: -f1)
+   n=$((n - 1))
+   wallpaper=$(sed "${n}q;d" "${file_log}")
+fi
+
 echo "$wallpaper"
-echo "$wallpaper" > /tmp/wallpaper.txt
+echo "$wallpaper" > "${file_cur}"
+
 setWallpaper
 if [[ $(whoami) = 'sflip' ]]; then
    setWallpaperSymlinkI3
