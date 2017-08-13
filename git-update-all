@@ -1,0 +1,12 @@
+#!/bin/bash
+
+for d in */; do
+   echo
+   echo processing "$d"
+   cd "$d" || exit 1
+   if [[ -d ".git" ]]; then
+      # git fetch
+      git pull
+   fi
+   cd ..
+done
