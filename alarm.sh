@@ -73,7 +73,6 @@ function pick_audio_src() {
 
 
 function start_alarm() {
-    # TODO: run in subshell to terminate immediately
     echo $$ > ${PIDFILE_START}
 
     set_volume ${VOLUME_INITIAL}
@@ -82,12 +81,15 @@ function start_alarm() {
     cvlc "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
 
+    # increase volume step by step (in background)
+    (
     for (( i = 0; i < ${VOLUME_INCREMENT_COUNT}; i++ )); do
         sleep ${VOLUME_INCREMENT_FREQUENCY}
         set_volume +${VOLUME_INCREMENT_AMOUNT}
     done
 
     rm ${PIDFILE_START}
+    ) &
 }
 
 
