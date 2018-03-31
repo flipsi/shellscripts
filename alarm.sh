@@ -36,8 +36,8 @@ AUDIO_SRC_POOL=(\
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
 
-PIDFILE_START=/tmp/alarm.pid
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
+PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
 
 
@@ -73,8 +73,6 @@ function pick_audio_src() {
 
 
 function start_alarm() {
-    echo $$ > ${PIDFILE_START}
-
     set_volume ${VOLUME_INITIAL}
 
     echo "Starting audio player..."
@@ -88,8 +86,9 @@ function start_alarm() {
         set_volume +${VOLUME_INCREMENT_AMOUNT}
     done
 
-    rm ${PIDFILE_START}
-    ) &
+    rm ${PIDFILE_VOLUME_INCREMENT}
+    ) & echo $! > ${PIDFILE_VOLUME_INCREMENT}
+    echo "Volume increment PID: $(cat ${PIDFILE_VOLUME_INCREMENT})"
 }
 
 
