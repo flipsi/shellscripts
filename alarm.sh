@@ -94,12 +94,18 @@ function start_alarm() {
 
 
 function stop_alarm() {
-    for PIDFILE in ${PIDFILE_START} ${PIDFILE_AUDIO}; do
+    for PIDFILE in ${PIDFILE_VOLUME_INCREMENT} ${PIDFILE_AUDIO}; do
         if [[ ! -f ${PIDFILE} ]]; then
-            echo "Error! Did not find pidfile ${PIDFILE}"
+            echo "Warning: Did not find pidfile ${PIDFILE}"
         else
-            echo "Killing process with PID $(cat ${PIDFILE})"
-            kill $(cat ${PIDFILE}) && rm ${PIDFILE}
+            PID=$(cat ${PIDFILE})
+            if ps ${PID} >/dev/null; then
+                echo "Killing process with PID ${PID}"
+                kill ${PID} && rm ${PIDFILE}
+            else
+                echo "Warning: No process found with PID ${PID}"
+                rm ${PIDFILE}
+            fi
         fi
     done
 }
