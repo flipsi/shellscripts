@@ -62,7 +62,8 @@ function pick_audio_src() {
     fi
     if [[ ${AUDIO_SRC} =~ ^http ]]; then
         if ! curl -ILsf ${AUDIO_SRC} -o/dev/null; then
-            echo "Audio source ${AUDIO_SRC} seems unreachable! Using fallback ${AUDIO_SRC_FALLBACK}"
+            echo "Audio source ${AUDIO_SRC} seems unreachable!"
+            echo "Using fallback ${AUDIO_SRC_FALLBACK}"
             AUDIO_SRC=${AUDIO_SRC_FALLBACK}
         fi
     fi
@@ -72,8 +73,7 @@ function pick_audio_src() {
 
 
 function start_alarm() {
-    local src="$1"
-    echo "Alarm started with PID: $$"
+    # TODO: run in subshell to terminate immediately
     echo $$ > ${PIDFILE_START}
 
     set_volume ${VOLUME_INITIAL}
@@ -96,6 +96,7 @@ function stop_alarm() {
         if [[ ! -f ${PIDFILE} ]]; then
             echo "Error! Did not find pidfile ${PIDFILE}"
         else
+            echo "Killing process with PID $(cat ${PIDFILE})"
             kill $(cat ${PIDFILE}) && rm ${PIDFILE}
         fi
     done
@@ -105,6 +106,8 @@ function stop_alarm() {
 if [[ -z $1 ]]; then
     print_help_msg
 elif [[ $1 = "start" ]]; then
+    echo "------------------------------------"
+    echo "alarm.sh started at $(date +'%F %R')"
     pick_audio_src $2
     start_alarm
 elif [[ $1 = "stop" ]]; then
