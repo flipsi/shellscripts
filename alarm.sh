@@ -20,6 +20,7 @@ EOF
 # CONFIG #
 ##########
 
+# TODO: adjust and normalize volume for pool
 VOLUME_INITIAL=25
 VOLUME_INCREMENT_COUNT=8
 VOLUME_INCREMENT_FREQUENCY=$((60 * 2))
@@ -27,20 +28,16 @@ VOLUME_INCREMENT_AMOUNT=2
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
-    http://addrad.io/4WRNm5 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://direct.fipradio.fr/live/fip-webradio2.mp3 \
     http://mp3channels.webradio.antenne.de/90er-hits \
     http://mp3channels.webradio.antenne.de:80/antenne \
-    http://rock-high.rautemusik.fm \
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
 
 PIDFILE_START=/tmp/alarm.pid
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
-LOGFILE_AUDIO_1=/tmp/alarm_audio.log
-LOGFILE_AUDOI_2=/tmp/alarm_audio.error.log
 
 
 
@@ -81,8 +78,8 @@ function start_alarm() {
 
     set_volume ${VOLUME_INITIAL}
 
-    echo "Starting audio player... (logs to ${LOGFILE_AUDIO_1} and ${LOGFILE_AUDOI_2})"
-    cvlc "${AUDIO_SRC}" >${LOGFILE_AUDIO_1} 2>${LOGFILE_AUDOI_2} & echo $! > ${PIDFILE_AUDIO}
+    echo "Starting audio player..."
+    cvlc "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
 
     for (( i = 0; i < ${VOLUME_INCREMENT_COUNT}; i++ )); do
