@@ -25,7 +25,7 @@ VOLUME_INCREMENT_COUNT=8
 VOLUME_INCREMENT_FREQUENCY=$((60 * 2))
 VOLUME_INCREMENT_AMOUNT=2
 
-AUDIO_SRC= # will be picked from pool
+AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
     http://addrad.io/4WRNm5 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
@@ -35,6 +35,7 @@ AUDIO_SRC_POOL=(\
     http://mp3channels.webradio.antenne.de:80/antenne \
     http://rock-high.rautemusik.fm \
     )
+AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
 
 PIDFILE_START=/tmp/alarm.pid
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
@@ -62,6 +63,13 @@ function pick_audio_src() {
     else
         AUDIO_SRC=${AUDIO_SRC_POOL[$RANDOM % ${#AUDIO_SRC_POOL[@]}]}
     fi
+    if [[ ${AUDIO_SRC} =~ ^http ]]; then
+        if ! curl -ILsf ${AUDIO_SRC} -o/dev/null; then
+            echo "Audio source ${AUDIO_SRC} seems unreachable! Using fallback ${AUDIO_SRC_FALLBACK}"
+            AUDIO_SRC=${AUDIO_SRC_FALLBACK}
+        fi
+    fi
+
     echo "Audio source is ${AUDIO_SRC}"
 }
 
