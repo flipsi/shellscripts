@@ -49,7 +49,8 @@ PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 function set_volume() {
     local VOLUME="$1"
     echo "Setting volume: ${VOLUME}%"
-    pactl -- set-sink-volume 0 ${VOLUME}%
+    SINK=$(pactl -- list short sinks | cut -f1)
+    pactl -- set-sink-volume ${SINK} ${VOLUME}%
 }
 
 
