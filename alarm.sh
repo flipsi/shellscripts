@@ -111,6 +111,9 @@ function stop_alarm() {
 }
 
 
+# ensure that pactl works from cron
+export PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
+
 if [[ -z $1 ]]; then
     print_help_msg
 elif [[ $1 = "start" ]]; then
