@@ -31,8 +31,7 @@ AUDIO_SRC_POOL=(\
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://direct.fipradio.fr/live/fip-webradio2.mp3 \
-    http://mp3channels.webradio.antenne.de/90er-hits \
-    http://mp3channels.webradio.antenne.de:80/antenne \
+    http://stream.srg-ssr.ch/m/rsj/mp3_128
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
 
