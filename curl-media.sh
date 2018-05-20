@@ -49,7 +49,7 @@ fi
 
 set -e
 
-FILE_PATTERN='\.(mp3|mp4|jpg|jpeg|gif|png|flv|mov)$'
+FILE_PATTERN='\.(pdf|mp3|mp4|jpg|jpeg|gif|png|flv|mov)$'
 
 FILES=($(\
     curl -s $URL \
