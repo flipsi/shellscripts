@@ -28,6 +28,7 @@ VOLUME_INCREMENT_AMOUNT=2
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
+    http://soulradio02.live-streams.nl:80/live \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://direct.fipradio.fr/live/fip-webradio2.mp3 \
