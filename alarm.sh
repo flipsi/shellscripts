@@ -28,14 +28,20 @@ VOLUME_INCREMENT_AMOUNT=2
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
-    http://176.31.248.14:34794/listen.pls?sid=1 \
+    http://176.31.248.14:34794/listen.pls \
+    http://192.211.51.158:5014/listen.pls?sid=1 \
+    http://192.96.205.59:7610/listen.pls?sid=1 \
     http://192.96.205.59:9030/ \
-    http://198.50.158.92:8190/listen.pls?sid=1 \
-    http://64.71.79.181:5058/listen.pls?sid=1 \
+    http://198.50.158.92:8190/listen.pls \
+    http://199.189.111.28:8012/ \
+    http://209.236.126.18:8002/ \
+    http://64.71.79.181:5058/listen.pls \
+    http://66.85.88.18:5284/listen.pls?sid=1 \
+    http://95.211.3.65:8000/listen.pls?sid=1 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://direct.fipradio.fr/live/fip-webradio2.mp3 \
-    http://listento.thefunkstation.com:8000/listen.pls?sid=1 \
+    http://listento.thefunkstation.com:8000/listen.pls \
     http://soulradio02.live-streams.nl:80/live \
     http://stream.srg-ssr.ch/m/rsj/mp3_128 \
     https://www.stream24.net/tune-in/r6247.m3u \
