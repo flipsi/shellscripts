@@ -28,11 +28,17 @@ VOLUME_INCREMENT_AMOUNT=2
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
-    http://soulradio02.live-streams.nl:80/live \
+    http://176.31.248.14:34794/listen.pls?sid=1 \
+    http://192.96.205.59:9030/ \
+    http://198.50.158.92:8190/listen.pls?sid=1 \
+    http://64.71.79.181:5058/listen.pls?sid=1 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://direct.fipradio.fr/live/fip-webradio2.mp3 \
-    http://stream.srg-ssr.ch/m/rsj/mp3_128
+    http://listento.thefunkstation.com:8000/listen.pls?sid=1 \
+    http://soulradio02.live-streams.nl:80/live \
+    http://stream.srg-ssr.ch/m/rsj/mp3_128 \
+    https://www.stream24.net/tune-in/r6247.m3u \
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
 
