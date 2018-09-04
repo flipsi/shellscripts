@@ -31,7 +31,6 @@ AUDIO_SRC_POOL=(\
     http://176.31.248.14:34794 \
     http://192.211.51.158:5014 \
     http://192.96.205.59:7610 \
-    http://192.96.205.59:9030 \
     http://198.50.158.92:8190 \
     http://199.189.111.28:8012 \
     http://209.236.126.18:8002 \
@@ -40,7 +39,6 @@ AUDIO_SRC_POOL=(\
     http://95.211.3.65:8000 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
-    http://direct.fipradio.fr/live/fip-webradio2.mp3 \
     http://listento.thefunkstation.com:8000 \
     http://soulradio02.live-streams.nl:80/live \
     http://stream.srg-ssr.ch/m/rsj/mp3_128 \
