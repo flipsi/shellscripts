@@ -44,7 +44,7 @@ AUDIO_SRC_POOL=(\
     http://stream.srg-ssr.ch/m/rsj/mp3_128 \
     https://www.stream24.net/tune-in/r6247.m3u \
     )
-AUDIO_SRC_FALLBACK="/home/sflip/snd/giving-up-the-ghost.flac"
+AUDIO_SRC_FALLBACK="/home/sflip/snd/06 - I Just Don't Know What to Do With Myself.mp3"
 
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
