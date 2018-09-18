@@ -60,7 +60,7 @@ function set_volume() {
     local VOLUME="$1"
     echo "Setting volume: ${VOLUME}%"
     SINK=$(pactl -- list short sinks | cut -f1)
-    pactl -- set-sink-volume ${SINK} ${VOLUME}%
+    pactl -- set-sink-volume "${SINK}" "${VOLUME}%"
 }
 
 
@@ -72,10 +72,10 @@ function pick_audio_src() {
         AUDIO_SRC=${AUDIO_SRC_POOL[$RANDOM % ${#AUDIO_SRC_POOL[@]}]}
     fi
     if [[ ${AUDIO_SRC} =~ ^http ]]; then
-        if ! curl -ILsf ${AUDIO_SRC} -o/dev/null; then
+        if ! curl -ILsf "${AUDIO_SRC}" -o/dev/null; then
             echo "Audio source ${AUDIO_SRC} seems unreachable!"
             echo "Using fallback ${AUDIO_SRC_FALLBACK}"
-            AUDIO_SRC=${AUDIO_SRC_FALLBACK}
+            AUDIO_SRC="${AUDIO_SRC_FALLBACK}"
         fi
     fi
 
@@ -92,7 +92,7 @@ function start_alarm() {
 
     # increase volume step by step (in background)
     (
-    for (( i = 0; i < ${VOLUME_INCREMENT_COUNT}; i++ )); do
+    for (( i = 0; i < VOLUME_INCREMENT_COUNT; i++ )); do
         sleep ${VOLUME_INCREMENT_FREQUENCY}
         set_volume +${VOLUME_INCREMENT_AMOUNT}
     done
@@ -109,9 +109,9 @@ function stop_alarm() {
             echo "Warning: Did not find pidfile ${PIDFILE}"
         else
             PID=$(cat ${PIDFILE})
-            if ps ${PID} >/dev/null; then
+            if ps "${PID}" >/dev/null; then
                 echo "Killing process with PID ${PID}"
-                kill ${PID} && rm ${PIDFILE}
+                kill "${PID}" && rm ${PIDFILE}
             else
                 echo "Warning: No process found with PID ${PID}"
                 rm ${PIDFILE}
@@ -122,19 +122,20 @@ function stop_alarm() {
 
 
 # ensure that pactl works from cron
-export PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
+PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
+export PULSE_RUNTIME_PATH
 
 if [[ -z $1 ]]; then
     print_help_msg
 elif [[ $1 = "start" ]]; then
     echo "------------------------------------"
     echo "alarm.sh started at $(date +'%F %R')"
-    pick_audio_src $2
+    pick_audio_src "$2"
     start_alarm
 elif [[ $1 = "stop" ]]; then
     stop_alarm
 elif [[ $1 =~ ^[+-]?[0-9]+$ ]]; then
-    set_volume $1
+    set_volume "$1"
 else
     print_help_msg
 fi
