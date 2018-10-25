@@ -32,9 +32,11 @@ AUDIO_SRC_POOL=(\
     http://192.211.51.158:5014 \
     http://198.50.158.92:8190 \
     http://209.236.126.18:8002 \
+    http://198.7.62.157:8003 \
     http://64.71.79.181:5058 \
     http://66.85.88.18:5284 \
     http://95.211.3.65:8000 \
+    https://internetradio.salue.de:8443/classicrock.mp3 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
     http://listento.thefunkstation.com:8000 \
