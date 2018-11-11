@@ -43,6 +43,11 @@ AUDIO_SRC_POOL=(\
     http://soulradio02.live-streams.nl:80/live \
     http://stream.srg-ssr.ch/m/rsj/mp3_128 \
     https://www.stream24.net/tune-in/r6247.m3u \
+    http://cristina.torontocast.com:8022/stream \
+    http://radio.netstream.ch/128k \
+    http://19763.live.streamtheworld.com:3690/977_OLDIES_SC \
+    http://edge01.media.positivityradio.world:8081/positively/60s128/icecast.audio \
+    http://bluford.torontocast.com:8626/stream \
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection,_Vol._1-rNkSgsbbWfI.webm"
 
