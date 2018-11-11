@@ -36,6 +36,7 @@ AUDIO_SRC_POOL=(\
     http://64.71.79.181:5058 \
     http://66.85.88.18:5284 \
     http://95.211.3.65:8000 \
+    http://192.240.102.133:11760/stream \
     https://internetradio.salue.de:8443/classicrock.mp3 \
     http://brainradioklassik.stream.laut.fm/brainradioklassik \
     http://direct.fipradio.fr/live/fip-midfi.mp3 \
@@ -48,6 +49,9 @@ AUDIO_SRC_POOL=(\
     http://19763.live.streamtheworld.com:3690/977_OLDIES_SC \
     http://edge01.media.positivityradio.world:8081/positively/60s128/icecast.audio \
     http://bluford.torontocast.com:8626/stream \
+    http://s6.voscast.com:11312 \
+    https://streamer.radio.co/s2c3cc784b/listen \
+    http://fluxfm.hoerradar.de/flux-jazzschwarz-mp3-hq \
     )
 AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection,_Vol._1-rNkSgsbbWfI.webm"
 
