@@ -133,6 +133,10 @@ function stop_alarm() {
 # ensure that pactl works from cron
 PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
 export PULSE_RUNTIME_PATH
+if [[ ! -w "${PULSE_RUNTIME_PATH}" ]]; then
+    echo "Warning: Please adjust permissions of ${PULSE_RUNTIME_PATH}"
+fi
+
 
 if [[ -z $1 ]]; then
     print_help_msg
