@@ -28,7 +28,6 @@ VOLUME_INCREMENT_AMOUNT=2
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
-    http://176.31.248.14:34794 \
     http://192.211.51.158:5014 \
     http://198.50.158.92:8190 \
     http://209.236.126.18:8002 \
