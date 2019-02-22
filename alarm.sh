@@ -16,15 +16,20 @@ EOF
 }
 
 
+# We have to decouple vlc volume and system volume by setting
+# `flat-volumes = no` in /etc/pulse/daemon.conf
+# https://superuser.com/questions/770028/decoupling-vlc-volume-and-system-volume
+
+
 ##########
 # CONFIG #
 ##########
 
 # TODO: adjust and normalize volume for pool
-VOLUME_INITIAL=40
+VOLUME_INITIAL=140
 VOLUME_INCREMENT_COUNT=8
 VOLUME_INCREMENT_FREQUENCY=$((60 * 2))
-VOLUME_INCREMENT_AMOUNT=2
+VOLUME_INCREMENT_AMOUNT=1
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
@@ -32,7 +37,6 @@ AUDIO_SRC_POOL=(\
     http://198.50.158.92:8190 \
     http://209.236.126.18:8002 \
     http://198.7.62.157:8003 \
-    http://64.71.79.181:5058 \
     http://66.85.88.18:5284 \
     http://95.211.3.65:8000 \
     http://192.240.102.133:11760/stream \
@@ -57,6 +61,11 @@ AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
+VLC_RC_PORT=9879
+
+## there are different versions of netcat (nc), one supporting -c the other supporting -N
+# VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
+VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
 
 
 ##########
@@ -64,11 +73,29 @@ PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 ##########
 
 
-function set_volume() {
+function set_system_volume() {
     local VOLUME="$1"
-    echo "Setting volume: ${VOLUME}%"
+    echo "Setting system volume: ${VOLUME}%"
     SINK=$(pactl -- list short sinks | cut -f1)
     pactl -- set-sink-volume "${SINK}" "${VOLUME}%"
+}
+
+function set_vlc_volume() {
+    local VOLUME="$1"
+    echo "Setting vlc volume: ${VOLUME}"
+    echo "volume ${VOLUME}" | ${VLC_NETCAT_CMD}
+}
+
+function increase_vlc_volume() {
+    local VOLUME="$1"
+    echo "Increasing vlc volume: ${VOLUME}"
+    echo "volup ${VOLUME}" | ${VLC_NETCAT_CMD}
+}
+
+function decrease_vlc_volume() {
+    local VOLUME="$1"
+    echo "Increasing vlc volume: ${VOLUME}"
+    echo "voldown ${VOLUME}" | ${VLC_NETCAT_CMD}
 }
 
 
@@ -92,17 +119,18 @@ function pick_audio_src() {
 
 
 function start_alarm() {
-    set_volume ${VOLUME_INITIAL}
-
     echo "Starting audio player..."
-    cvlc "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
+    vlc -I rc --rc-host=localhost:${VLC_RC_PORT} "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
+
+    sleep 0.1 # dirty hack to hope vlc interface is reachable
+    set_vlc_volume ${VOLUME_INITIAL}
 
     # increase volume step by step (in background)
     (
     for (( i = 0; i < VOLUME_INCREMENT_COUNT; i++ )); do
         sleep ${VOLUME_INCREMENT_FREQUENCY}
-        set_volume +${VOLUME_INCREMENT_AMOUNT}
+        increase_vlc_volume ${VOLUME_INCREMENT_AMOUNT}
     done
 
     rm ${PIDFILE_VOLUME_INCREMENT}
@@ -129,12 +157,12 @@ function stop_alarm() {
 }
 
 
-# ensure that pactl works from cron
-PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
-export PULSE_RUNTIME_PATH
-if [[ ! -w "${PULSE_RUNTIME_PATH}" ]]; then
-    echo "Warning: Please adjust permissions of ${PULSE_RUNTIME_PATH}"
-fi
+# # ensure that pactl works from cron
+# PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
+# export PULSE_RUNTIME_PATH
+# if [[ ! -w "${PULSE_RUNTIME_PATH}" ]]; then
+#     echo "Warning: Please adjust permissions of ${PULSE_RUNTIME_PATH}"
+# fi
 
 
 if [[ -z $1 ]]; then
@@ -142,7 +170,8 @@ if [[ -z $1 ]]; then
 elif [[ $1 = "start" ]]; then
     echo "------------------------------------"
     echo "alarm.sh started at $(date +'%F %R')"
-    pick_audio_src "$2"
+    # pick_audio_src "$2"
+    pick_audio_src http://stream.srg-ssr.ch/m/rsj/mp3_128
     start_alarm
 elif [[ $1 = "stop" ]]; then
     stop_alarm
