@@ -176,7 +176,7 @@ elif [[ $1 = "start" ]]; then
 elif [[ $1 = "stop" ]]; then
     stop_alarm
 elif [[ $1 =~ ^[+-]?[0-9]+$ ]]; then
-    set_volume "$1"
+    set_vlc_volume "$1"
 else
     print_help_msg
 fi
