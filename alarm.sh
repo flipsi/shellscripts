@@ -61,6 +61,9 @@ AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
+# ALSA audio device to use (list with `aplay -L`)
+DEVICE="plughw:CARD=sndrpihifiberry,DEV=0"
+
 VLC_RC_PORT=9879
 
 ## there are different versions of netcat (nc), one supporting -c the other supporting -N
@@ -120,7 +123,10 @@ function pick_audio_src() {
 
 function start_alarm() {
     echo "Starting audio player..."
-    vlc -I rc --rc-host=localhost:${VLC_RC_PORT} "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
+    vlc \
+        --aout=alsa --alsa-audio-device="$DEVICE" \
+        -I rc --rc-host=localhost:${VLC_RC_PORT} \
+        "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
 
     sleep 0.1 # dirty hack to hope vlc interface is reachable
