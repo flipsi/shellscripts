@@ -2,15 +2,16 @@
 
 # Author: "Philipp Moers" <soziflip@gmail.com>
 
+SCRIPTNAME=$(basename "$0")
 
 function print_help_msg() {
     cat <<-EOF
-alarm.sh - Playing some audio with increasing volume
+$SCRIPTNAME - Playing some audio with increasing volume
 
 Usage:
-    alarm-ctl.sh start [URL]     # start alarm
-    alarm-ctl.sh stop            # stop alarm
-    alarm-ctl.sh <0-100>         # set volume
+    $SCRIPTNAME start [URL]     # start alarm
+    $SCRIPTNAME stop            # stop alarm
+    $SCRIPTNAME <0-100>         # set volume
 
 EOF
 }
