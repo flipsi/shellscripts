@@ -87,9 +87,9 @@ function setWallpaperSymlinkI3() {
     local wallpaper=$(echo $wallpaper | cut -d' ' -f1)
     # i3lock needs png
     if file "$wallpaper" | grep 'PNG image data' >/dev/null; then
-        ln -s -f "$wallpaper" ~/.i3/wallpaper.png
+        ln -s -f "$wallpaper" $HOME/.i3/wallpaper.png
     else
-        convert "$wallpaper" ~/.i3/wallpaper.png
+        convert "$wallpaper" $HOME/.i3/wallpaper.png
     fi
 }
 
