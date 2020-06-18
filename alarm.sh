@@ -2,6 +2,8 @@
 
 # Author: "Philipp Moers" <soziflip@gmail.com>
 
+set -e
+
 SCRIPTNAME=$(basename "$0")
 
 function print_help_msg() {
