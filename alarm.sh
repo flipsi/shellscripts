@@ -65,7 +65,7 @@ PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
 # ALSA audio device to use (list with `aplay -L`)
-DEVICE="plughw:CARD=sndrpihifiberry,DEV=0"
+ALSA_DEVICE=${ALSA_DEVICE:-default}
 
 VLC_RC_PORT=9879
 
@@ -127,7 +127,7 @@ function pick_audio_src() {
 function start_alarm() {
     echo "Starting audio player..."
     vlc \
-        --aout=alsa --alsa-audio-device="$DEVICE" \
+        --aout=alsa --alsa-audio-device="$ALSA_DEVICE" \
         -I rc --rc-host=localhost:${VLC_RC_PORT} \
         "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
