@@ -3,7 +3,6 @@
 # Author: "Philipp Moers" <soziflip@gmail.com>
 
 set -e
-set -u
 set -o pipefail
 
 SCRIPTNAME=$(basename "$0")
