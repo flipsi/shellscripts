@@ -5,6 +5,7 @@
 set -e
 set -o pipefail
 
+DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 SCRIPTNAME=$(basename "$0")
 
 function print_help_msg() {
@@ -198,7 +199,7 @@ function enable_alarm() {
     local TO_MINUTE=$(date -d "$FROM_HOUR:$FROM_MINUTE $DURATION minutes" +'%M')
     open_crontab
     disable_alarm_2
-    append_once "$TMP_CRONTAB" "ALARM_CMD=$(pwd)/$SCRIPTNAME"
+    append_once "$TMP_CRONTAB" "ALARM_CMD=${DIR}/$SCRIPTNAME"
     append_once "$TMP_CRONTAB" "ALARM_LOG=/tmp/$SCRIPTNAME.log"
     START_LINE="$FROM_MINUTE $FROM_HOUR * * * \$ALARM_CMD start >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
     STOP_LINE="$TO_MINUTE $TO_HOUR * * * \$ALARM_CMD stop  >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
