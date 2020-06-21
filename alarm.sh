@@ -12,9 +12,13 @@ function print_help_msg() {
 $SCRIPTNAME - Playing some audio with increasing volume
 
 Usage:
-    $SCRIPTNAME start [URL]     # start alarm
+
+    $SCRIPTNAME start [URL]     # start alarm (optional stream URL)
     $SCRIPTNAME stop            # stop alarm
     $SCRIPTNAME <0-100>         # set volume
+
+    $SCRIPTNAME enable <hour> <minute> [<duration>]  # schedule daily alarm for <hour>:<minute>
+    $SCRIPTNAME disable                              # remove scheduled alarm
 
 EOF
 }
@@ -28,6 +32,8 @@ EOF
 ##########
 # CONFIG #
 ##########
+
+DEFAULT_DURATION=30
 
 # TODO: adjust and normalize volume for pool
 VOLUME_INITIAL=140
@@ -74,6 +80,9 @@ VLC_RC_PORT=9879
 # VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
 VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
 
+# suffix appended to crontab line, will be grepped for and matched lines will be deleted!
+ALARM_CRON_ID="MANAGED ALARM CRON"
+
 
 ##########
 # SCRIPT #
@@ -105,7 +114,6 @@ function decrease_vlc_volume() {
     echo "voldown ${VOLUME}" | ${VLC_NETCAT_CMD}
 }
 
-
 function pick_audio_src() {
     local SRC="$1"
     if [[ -n $SRC ]]; then
@@ -123,7 +131,6 @@ function pick_audio_src() {
 
     echo "Audio source is ${AUDIO_SRC}"
 }
-
 
 function start_alarm() {
     echo "Starting audio player..."
@@ -148,7 +155,6 @@ function start_alarm() {
     echo "Volume increment PID: $(cat ${PIDFILE_VOLUME_INCREMENT})"
 }
 
-
 function stop_alarm() {
     for PIDFILE in ${PIDFILE_VOLUME_INCREMENT} ${PIDFILE_AUDIO}; do
         if [[ ! -f ${PIDFILE} ]]; then
@@ -165,6 +171,53 @@ function stop_alarm() {
         fi
     done
 }
+
+function append_once() {
+    FILE="$1"
+    LINE="$2"
+    grep -q -F "$LINE" "$FILE"  || echo "$LINE" >> "$FILE"
+}
+
+
+function open_crontab() {
+    TMP_CRONTAB=$(mktemp "/tmp/crontab.XXX.txt")
+    crontab -l > "$TMP_CRONTAB"
+}
+
+function close_crontab() {
+    # cat "$TMP_CRONTAB" # debug
+    cat "$TMP_CRONTAB" | crontab -
+}
+
+function enable_alarm() {
+    local FROM_HOUR="$1"
+    local FROM_MINUTE="$2"
+    local DURATION="$3"
+    local TO_HOUR=$(  date -d "$FROM_HOUR:$FROM_MINUTE $DURATION minutes" +'%H')
+    local TO_MINUTE=$(date -d "$FROM_HOUR:$FROM_MINUTE $DURATION minutes" +'%M')
+    open_crontab
+    disable_alarm_2
+    append_once "$TMP_CRONTAB" "ALARM_CMD=$(pwd)/$SCRIPTNAME"
+    append_once "$TMP_CRONTAB" "ALARM_LOG=/tmp/$SCRIPTNAME.log"
+    START_LINE="$FROM_MINUTE $FROM_HOUR * * * \$ALARM_CMD start >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
+    STOP_LINE="$TO_MINUTE $TO_HOUR * * * \$ALARM_CMD stop  >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
+    append_once "$TMP_CRONTAB" "$START_LINE"
+    append_once "$TMP_CRONTAB" "$STOP_LINE"
+    close_crontab
+    echo "Scheduled alarm for $FROM_HOUR:$FROM_MINUTE."
+}
+
+function disable_alarm() {
+    open_crontab
+    disable_alarm_2
+    close_crontab
+    echo "Removed scheduled alarm."
+}
+
+function disable_alarm_2() {
+    awk -i inplace -v rmv="$ALARM_CRON_ID" '!index($0,rmv)' "$TMP_CRONTAB"
+}
+
 
 
 # # ensure that pactl works from cron
@@ -185,6 +238,15 @@ elif [[ $1 = "start" ]]; then
     start_alarm
 elif [[ $1 = "stop" ]]; then
     stop_alarm
+elif [[ $1 = "enable" && -n "$2" && "$2" =~ ^[0-9]{1,2}$ && -n "$3" && "$3" =~ ^[0-9]{1,2}$ ]]; then
+    if [[ -n "$4" && "$4" =~ ^[0-9]{1,2}$ ]]; then
+        DURATION="$4"
+    else
+        DURATION="$DEFAULT_DURATION"
+    fi
+    enable_alarm "$2" "$3" "$DURATION"
+elif [[ $1 = "disable" ]]; then
+    disable_alarm
 elif [[ $1 =~ ^[+-]?[0-9]+$ ]]; then
     set_vlc_volume "$1"
 else
