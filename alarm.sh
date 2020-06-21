@@ -186,7 +186,8 @@ function open_crontab() {
 
 function close_crontab() {
     # cat "$TMP_CRONTAB" # debug
-    cat "$TMP_CRONTAB" | crontab -
+    echo -e "\n" > '/tmp/ensure_empty_line_in_crontab'
+    cat "$TMP_CRONTAB" '/tmp/ensure_empty_line_in_crontab' | crontab -
 }
 
 function enable_alarm() {
