@@ -192,21 +192,21 @@ function close_crontab() {
 }
 
 function enable_alarm() {
-    local FROM_HOUR="$1"
-    local FROM_MINUTE="$2"
+    local ALPHA_HOUR="$1"
+    local ALPHA_MINUTE="$2"
     local DURATION="$3"
-    local TO_HOUR=$(  date -d "$FROM_HOUR:$FROM_MINUTE $DURATION minutes" +'%H')
-    local TO_MINUTE=$(date -d "$FROM_HOUR:$FROM_MINUTE $DURATION minutes" +'%M')
+    local OMEGA_HOUR=$(  date -d "$ALPHA_HOUR:$ALPHA_MINUTE $DURATION minutes" +'%H')
+    local OMEGA_MINUTE=$(date -d "$ALPHA_HOUR:$ALPHA_MINUTE $DURATION minutes" +'%M')
     open_crontab
     disable_alarm_2
     append_once "$TMP_CRONTAB" "ALARM_CMD=${DIR}/$SCRIPTNAME"
     append_once "$TMP_CRONTAB" "ALARM_LOG=/tmp/$SCRIPTNAME.log"
-    START_LINE="$FROM_MINUTE $FROM_HOUR * * * \$ALARM_CMD start >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
-    STOP_LINE="$TO_MINUTE $TO_HOUR * * * \$ALARM_CMD stop  >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
-    append_once "$TMP_CRONTAB" "$START_LINE"
-    append_once "$TMP_CRONTAB" "$STOP_LINE"
+    ALPHA_LINE="$ALPHA_MINUTE $ALPHA_HOUR * * * \$ALARM_CMD start >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
+    OMEGA_LINE="$OMEGA_MINUTE $OMEGA_HOUR * * * \$ALARM_CMD stop  >>\$ALARM_LOG 2>&1 # $ALARM_CRON_ID"
+    append_once "$TMP_CRONTAB" "$ALPHA_LINE"
+    append_once "$TMP_CRONTAB" "$OMEGA_LINE"
     close_crontab
-    echo "Scheduled alarm for $FROM_HOUR:$FROM_MINUTE."
+    echo "Scheduled alarm for $ALPHA_HOUR:$ALPHA_MINUTE."
 }
 
 function disable_alarm() {
