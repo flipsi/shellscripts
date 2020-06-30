@@ -105,6 +105,11 @@ function configure_vlc_netcat_cmd() {
     fi
 }
 
+function configure_vlc_env() {
+    export DISPLAY=${DISPLAY:-":0"}
+    export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-"unix:path=/run/user/$(id -u)/bus"}
+}
+
 function set_system_volume() {
     local VOLUME="$1"
     echo "Setting system volume: ${VOLUME}%"
@@ -247,6 +252,7 @@ function disable_alarm_2() {
 
 check_vlc_volume_is_decoupled_from_system_volume
 configure_vlc_netcat_cmd
+configure_vlc_env
 
 if [[ -z $1 ]]; then
     print_help_msg
