@@ -25,11 +25,6 @@ EOF
 }
 
 
-# We have to decouple vlc volume and system volume by setting
-# `flat-volumes = no` in /etc/pulse/daemon.conf
-# https://superuser.com/questions/770028/decoupling-vlc-volume-and-system-volume
-
-
 ##########
 # CONFIG #
 ##########
@@ -85,13 +80,25 @@ ALARM_CRON_ID="MANAGED ALARM CRON"
 # SCRIPT #
 ##########
 
+function check_vlc_volume_is_decoupled_from_system_volume() {
+    if ! grep -q -E '^flat-volumes = no' '/etc/pulse/daemon.conf'; then
+        cat <<-EOF
+ERROR: Please decouple vlc volume from system volume by adding
+'flat-volumes = no'
+to your /etc/pulse/daemon.conf For details, see
+https://superuser.com/questions/770028/decoupling-vlc-volume-and-system-volume
+EOF
+        exit 1
+    fi
+}
+
 function configure_vlc_netcat_cmd() {
     if grep -q '^GNU netcat' <(nc -h | head -n 1); then
         VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
     elif grep -q '^OpenBSD netcat' <(nc -h | head -n 1); then
         VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
     else
-        echo 'Unknown netcat version!'
+        echo 'ERROR: Unknown netcat version!'
         exit 1
     fi
 }
@@ -236,6 +243,7 @@ function disable_alarm_2() {
 # fi
 
 
+check_vlc_volume_is_decoupled_from_system_volume
 configure_vlc_netcat_cmd
 
 if [[ -z $1 ]]; then
