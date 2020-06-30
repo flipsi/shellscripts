@@ -93,10 +93,11 @@ EOF
 }
 
 function configure_vlc_netcat_cmd() {
-    local NETCAT_HELP_OUTPUT=$(nc -h 2>&1)
-    if grep -q '^GNU netcat' <(echo $NETCAT_HELP_OUTPUT | head -n 1); then
+    local NETCAT_HELP_OUTPUT
+    NETCAT_HELP_OUTPUT=$(nc -h 2>&1)
+    if grep -q '^GNU netcat' <(echo "$NETCAT_HELP_OUTPUT" | head -n 1); then
         VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
-    elif grep -q '^OpenBSD netcat' <(echo $NETCAT_HELP_OUTPUT | head -n 1); then
+    elif grep -q '^OpenBSD netcat' <(echo "$NETCAT_HELP_OUTPUT" | head -n 1); then
         VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
     else
         echo 'ERROR: Unknown netcat version!'
