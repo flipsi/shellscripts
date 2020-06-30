@@ -68,7 +68,7 @@ PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
 # ALSA audio device to use (list with `aplay -L`)
-ALSA_DEVICE=${ALSA_DEVICE:-default}
+ALSA_DEVICE=${ALSA_DEVICE:-"default"}
 
 VLC_RC_PORT=9879
 
