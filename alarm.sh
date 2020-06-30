@@ -112,27 +112,27 @@ function configure_vlc_env() {
 
 function set_system_volume() {
     local VOLUME="$1"
-    echo "Setting system volume: ${VOLUME}%"
     SINK=$(pactl -- list short sinks | cut -f1)
     pactl -- set-sink-volume "${SINK}" "${VOLUME}%"
+    echo "Set system volume to ${VOLUME}%"
 }
 
 function set_vlc_volume() {
     local VOLUME="$1"
-    echo "Setting vlc volume: ${VOLUME}"
     echo "volume ${VOLUME}" | ${VLC_NETCAT_CMD}
+    echo "Set vlc volume to ${VOLUME}"
 }
 
 function increase_vlc_volume() {
     local VOLUME="$1"
-    echo "Increasing vlc volume: ${VOLUME}"
     echo "volup ${VOLUME}" | ${VLC_NETCAT_CMD}
+    echo "Increased vlc volume by ${VOLUME}"
 }
 
 function decrease_vlc_volume() {
     local VOLUME="$1"
-    echo "Increasing vlc volume: ${VOLUME}"
     echo "voldown ${VOLUME}" | ${VLC_NETCAT_CMD}
+    echo "Decreased vlc volume by ${VOLUME}"
 }
 
 function pick_audio_src() {
