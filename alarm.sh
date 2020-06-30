@@ -77,10 +77,6 @@ ALSA_DEVICE=${ALSA_DEVICE:-default}
 
 VLC_RC_PORT=9879
 
-## there are different versions of netcat (nc), one supporting -c the other supporting -N
-# VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
-VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
-
 # suffix appended to crontab line, will be grepped for and matched lines will be deleted!
 ALARM_CRON_ID="MANAGED ALARM CRON"
 
@@ -89,6 +85,16 @@ ALARM_CRON_ID="MANAGED ALARM CRON"
 # SCRIPT #
 ##########
 
+function configure_vlc_netcat_cmd() {
+    if grep -q '^GNU netcat' <(nc -h | head -n 1); then
+        VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
+    elif grep -q '^OpenBSD netcat' <(nc -h | head -n 1); then
+        VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
+    else
+        echo 'Unknown netcat version!'
+        exit 1
+    fi
+}
 
 function set_system_volume() {
     local VOLUME="$1"
@@ -229,6 +235,8 @@ function disable_alarm_2() {
 #     echo "Warning: Please adjust permissions of ${PULSE_RUNTIME_PATH}"
 # fi
 
+
+configure_vlc_netcat_cmd
 
 if [[ -z $1 ]]; then
     print_help_msg
