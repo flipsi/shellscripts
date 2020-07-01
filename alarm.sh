@@ -32,10 +32,10 @@ EOF
 DEFAULT_DURATION=30
 
 # TODO: adjust and normalize volume for pool
-VOLUME_INITIAL=140
-VOLUME_INCREMENT_COUNT=8
+VOLUME_INITIAL=110
+VOLUME_INCREMENT_COUNT=5
 VOLUME_INCREMENT_FREQUENCY=$((60 * 2))
-VOLUME_INCREMENT_AMOUNT=1
+VOLUME_INCREMENT_AMOUNT=10
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
@@ -161,14 +161,18 @@ function pick_audio_src() {
 }
 
 function start_alarm() {
+    # https://wiki.videolan.org/Documentation:Command_line/
     echo "Starting audio player..."
     vlc \
         "${VLC_OUTPUT_ARGS[@]}" \
+        --gain=1.0 \
+        --volume-step=1 \
+        --no-volume-save \
         -I rc --rc-host=localhost:${VLC_RC_PORT} \
         "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
 
-    sleep 0.1 # dirty hack to hope vlc interface is reachable
+    sleep 0.2 # dirty hack to hope vlc interface is reachable
     set_vlc_volume ${VOLUME_INITIAL}
 
     # increase volume step by step (in background)
