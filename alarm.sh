@@ -67,8 +67,9 @@ AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 
-# ALSA audio device to use (list with `aplay -L`)
-ALSA_DEVICE=${ALSA_DEVICE:-"default"}
+# Optional ALSA audio device to use (list with `aplay -L`)
+# If not set, vlc output will not be overwritten
+ALSA_DEVICE="$ALSA_DEVICE"
 
 VLC_RC_PORT=9879
 
@@ -108,6 +109,12 @@ function configure_vlc_netcat_cmd() {
 function configure_vlc_env() {
     export DISPLAY=${DISPLAY:-":0"}
     export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-"unix:path=/run/user/$(id -u)/bus"}
+}
+
+function configure_vlc_output_args() {
+    if [[ -n $ALSA_DEVICE ]]; then
+        VLC_OUTPUT_ARGS=(--aout=alsa --alsa-audio-device="$ALSA_DEVICE")
+    fi
 }
 
 function set_system_volume() {
@@ -156,7 +163,7 @@ function pick_audio_src() {
 function start_alarm() {
     echo "Starting audio player..."
     vlc \
-        --aout=alsa --alsa-audio-device="$ALSA_DEVICE" \
+        "${VLC_OUTPUT_ARGS[@]}" \
         -I rc --rc-host=localhost:${VLC_RC_PORT} \
         "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
@@ -253,6 +260,7 @@ function disable_alarm_2() {
 check_vlc_volume_is_decoupled_from_system_volume
 configure_vlc_netcat_cmd
 configure_vlc_env
+configure_vlc_output_args
 
 if [[ -z $1 ]]; then
     print_help_msg
