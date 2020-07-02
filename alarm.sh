@@ -71,6 +71,7 @@ PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
 # If not set, vlc output will not be overwritten
 ALSA_DEVICE="$ALSA_DEVICE"
 
+VLC_RC_HOST=localhost
 VLC_RC_PORT=9879
 
 # suffix appended to crontab line, will be grepped for and matched lines will be deleted!
@@ -97,9 +98,9 @@ function configure_vlc_netcat_cmd() {
     local NETCAT_HELP_OUTPUT
     NETCAT_HELP_OUTPUT=$(nc -h 2>&1)
     if grep -q '^GNU netcat' <(echo "$NETCAT_HELP_OUTPUT" | head -n 1); then
-        VLC_NETCAT_CMD="nc -c localhost ${VLC_RC_PORT}"
+        VLC_NETCAT_CMD="nc -c $VLC_RC_HOST $VLC_RC_PORT"
     elif grep -q '^OpenBSD netcat' <(echo "$NETCAT_HELP_OUTPUT" | head -n 1); then
-        VLC_NETCAT_CMD="nc -N localhost ${VLC_RC_PORT}"
+        VLC_NETCAT_CMD="nc -N $VLC_RC_HOST $VLC_RC_PORT"
     else
         echo 'ERROR: Unknown netcat version!'
         exit 1
@@ -115,6 +116,15 @@ function configure_vlc_output_args() {
     if [[ -n $ALSA_DEVICE ]]; then
         VLC_OUTPUT_ARGS=(--aout=alsa --alsa-audio-device="$ALSA_DEVICE")
     fi
+}
+
+function wait_until_tcp_port_open() {
+    local HOST="$1"
+    local PORT="$2"
+    local SLEEP="0.02"
+    while ! nc -z "$HOST" "$PORT"; do
+        sleep "$SLEEP"
+    done
 }
 
 function set_system_volume() {
@@ -168,11 +178,11 @@ function start_alarm() {
         --gain=1.0 \
         --volume-step=1 \
         --no-volume-save \
-        -I rc --rc-host=localhost:${VLC_RC_PORT} \
+        -I rc --rc-host=$VLC_RC_HOST:$VLC_RC_PORT \
         "${AUDIO_SRC}" & echo $! > ${PIDFILE_AUDIO}
     echo "Audio player PID: $(cat ${PIDFILE_AUDIO})"
 
-    sleep 0.2 # dirty hack to hope vlc interface is reachable
+    wait_until_tcp_port_open "$VLC_RC_HOST" "$VLC_RC_PORT"
     set_vlc_volume ${VOLUME_INITIAL}
 
     # increase volume step by step (in background)
