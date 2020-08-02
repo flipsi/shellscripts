@@ -14,10 +14,9 @@ $SCRIPTNAME - Playing some audio with increasing volume
 
 Usage:
 
-    $SCRIPTNAME start [URL]     # start alarm (optional stream URL)
-    $SCRIPTNAME stop            # stop alarm
-    $SCRIPTNAME <0-100>         # set volume
-
+    $SCRIPTNAME start [--no-volume-increment] [URL]  # start alarm (optional stream URL)
+    $SCRIPTNAME stop                                 # stop alarm
+    $SCRIPTNAME <0-100>                              # set volume
     $SCRIPTNAME enable <hour> <minute> [<duration>]  # schedule daily alarm for <hour>:<minute>
     $SCRIPTNAME disable                              # remove scheduled alarm
 
@@ -44,10 +43,10 @@ require pactl
 DEFAULT_DURATION=30
 
 # TODO: adjust and normalize volume for pool
-VOLUME_INITIAL=110
+VOLUME_INITIAL=105
 VOLUME_INCREMENT_COUNT=5
 VOLUME_INCREMENT_FREQUENCY=$((60 * 2))
-VOLUME_INCREMENT_AMOUNT=10
+VOLUME_INCREMENT_AMOUNT=8
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
@@ -209,15 +208,19 @@ function start_alarm() {
     set_vlc_volume ${VOLUME_INITIAL}
 
     # increase volume step by step (in background)
-    (
-    for (( i = 0; i < VOLUME_INCREMENT_COUNT; i++ )); do
-        sleep ${VOLUME_INCREMENT_FREQUENCY}
-        increase_vlc_volume ${VOLUME_INCREMENT_AMOUNT}
-    done
+    if [[ -z "$VOLUME_INCREMENT_DISABLED" ]]; then
+        (
+        for (( i = 0; i < VOLUME_INCREMENT_COUNT; i++ )); do
+            sleep ${VOLUME_INCREMENT_FREQUENCY}
+            increase_vlc_volume ${VOLUME_INCREMENT_AMOUNT}
+        done
 
-    rm ${PIDFILE_VOLUME_INCREMENT}
-    ) & echo $! > ${PIDFILE_VOLUME_INCREMENT}
-    echo "Volume increment PID: $(cat ${PIDFILE_VOLUME_INCREMENT})"
+        rm ${PIDFILE_VOLUME_INCREMENT}
+        ) & echo $! > ${PIDFILE_VOLUME_INCREMENT}
+        echo "Volume increment PID: $(cat ${PIDFILE_VOLUME_INCREMENT})"
+    else
+        echo Playing at constant volume.
+    fi
 }
 
 function stop_alarm() {
@@ -304,7 +307,12 @@ if [[ -z $1 ]]; then
 elif [[ $1 = "start" ]]; then
     echo "------------------------------------"
     echo "alarm.sh started at $(date +'%F %R')"
-    pick_audio_src "$2"
+    if [[ "$2" = '--no-volume-increment' ]]; then
+        VOLUME_INCREMENT_DISABLED=1
+        pick_audio_src "$3"
+    else
+        pick_audio_src "$2"
+    fi
     start_alarm
 elif [[ $1 = "stop" ]]; then
     stop_alarm
