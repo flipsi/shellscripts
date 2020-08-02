@@ -164,22 +164,36 @@ function decrease_vlc_volume() {
     echo "Decreased vlc volume by ${VOLUME}"
 }
 
+function test_audio_stream_url() {
+    local URL="$1"
+    CONTENT_TYPE=$(timeout 3s curl -sI -f -o /dev/null -w '%{content_type}\n' "$URL")
+    if [[ "$CONTENT_TYPE" =~ ^audio/ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function pick_audio_src() {
+    if [[ -z $PICK_AUDIO_SRC_ATTEMPTS ]]; then
+        PICK_AUDIO_SRC_ATTEMPTS=0
+    fi
     local SRC="$1"
     if [[ -n $SRC ]]; then
         AUDIO_SRC="$SRC"
     else
         AUDIO_SRC=${AUDIO_SRC_POOL[$RANDOM % ${#AUDIO_SRC_POOL[@]}]}
     fi
-    if [[ ${AUDIO_SRC} =~ ^http ]]; then
-        if ! curl -ILsf "${AUDIO_SRC}" -o/dev/null; then
-            echo "Audio source ${AUDIO_SRC} seems unreachable!"
-            echo "Using fallback ${AUDIO_SRC_FALLBACK}"
-            AUDIO_SRC="${AUDIO_SRC_FALLBACK}"
-        fi
+    (( PICK_AUDIO_SRC_ATTEMPTS=PICK_AUDIO_SRC_ATTEMPTS+1))
+    if [[ "$PICK_AUDIO_SRC_ATTEMPTS" -ge 5 ]]; then
+        echo "Maximum attempts reached! Using fallback audio source ${AUDIO_SRC_FALLBACK}"
+        AUDIO_SRC="${AUDIO_SRC_FALLBACK}"
+    elif ! test_audio_stream_url "${AUDIO_SRC}"; then
+        echo "Audio source ${AUDIO_SRC} does not look like an audio source. Trying another one..."
+        pick_audio_src
+    else
+        echo "Audio source set to: ${AUDIO_SRC}"
     fi
-
-    echo "Audio source is ${AUDIO_SRC}"
 }
 
 function start_alarm() {
@@ -293,8 +307,7 @@ if [[ -z $1 ]]; then
 elif [[ $1 = "start" ]]; then
     echo "------------------------------------"
     echo "alarm.sh started at $(date +'%F %R')"
-    # pick_audio_src "$2"
-    pick_audio_src http://stream.srg-ssr.ch/m/rsj/mp3_128
+    pick_audio_src "$2"
     start_alarm
 elif [[ $1 = "stop" ]]; then
     stop_alarm
