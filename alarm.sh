@@ -52,7 +52,6 @@ VOLUME_INCREMENT_AMOUNT=10
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
     http://192.211.51.158:5014 \
-    http://198.50.158.92:8190 \
     http://209.236.126.18:8002 \
     http://198.7.62.157:8003 \
     http://66.85.88.18:5284 \
@@ -65,10 +64,8 @@ AUDIO_SRC_POOL=(\
     http://soulradio02.live-streams.nl:80/live \
     http://stream.srg-ssr.ch/m/rsj/mp3_128 \
     https://www.stream24.net/tune-in/r6247.m3u \
-    http://cristina.torontocast.com:8022/stream \
     http://radio.netstream.ch/128k \
     http://19763.live.streamtheworld.com:3690/977_OLDIES_SC \
-    http://edge01.media.positivityradio.world:8081/positively/60s128/icecast.audio \
     http://bluford.torontocast.com:8626/stream \
     http://s6.voscast.com:11312 \
     https://streamer.radio.co/s2c3cc784b/listen \
