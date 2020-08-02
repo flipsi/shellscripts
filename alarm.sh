@@ -25,6 +25,18 @@ EOF
 }
 
 
+function require() {
+    if ! (command -v "$1" >/dev/null); then
+        echo "ERROR: Command $1 required. Please install the corresponding package!"
+        exit 1
+    fi
+}
+
+require vlc
+require nc
+require pactl
+
+
 ##########
 # CONFIG #
 ##########
@@ -292,8 +304,10 @@ elif [[ $1 = "enable" && -n "$2" && "$2" =~ ^[0-9]{1,2}$ && -n "$3" && "$3" =~ ^
     else
         DURATION="$DEFAULT_DURATION"
     fi
+    require crontab
     enable_alarm "$2" "$3" "$DURATION"
 elif [[ $1 = "disable" ]]; then
+    require crontab
     disable_alarm
 elif [[ $1 =~ ^[+-]?[0-9]+$ ]]; then
     set_vlc_volume "$1"
