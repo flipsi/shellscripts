@@ -71,7 +71,7 @@ AUDIO_SRC_POOL=(\
     https://streamer.radio.co/s2c3cc784b/listen \
     http://fluxfm.hoerradar.de/flux-jazzschwarz-mp3-hq \
     )
-AUDIO_SRC_FALLBACK="/home/sflip/snd/Selections_from_Disneys_Orchestra_Collection,_Vol._1-rNkSgsbbWfI.webm"
+AUDIO_SRC_FALLBACK="/home/sflip/snd/Mark Ronson feat. Bruno Mars - Uptown Funk.mp3"
 
 PIDFILE_AUDIO=/tmp/alarm_audio.pid
 PIDFILE_VOLUME_INCREMENT=/tmp/alarm_volume_increment.pid
