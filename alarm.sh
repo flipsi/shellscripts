@@ -308,6 +308,7 @@ elif [[ $1 = "start" ]]; then
     echo "alarm.sh started at $(date +'%F %R')"
     if [[ "$2" = '--no-volume-increment' ]]; then
         VOLUME_INCREMENT_DISABLED=1
+        VOLUME_INITIAL=$((VOLUME_INITIAL + VOLUME_INCREMENT_AMOUNT * VOLUME_INCREMENT_COUNT))
         pick_audio_src "$3"
     else
         pick_audio_src "$2"
