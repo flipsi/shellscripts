@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Using SANE (https://wiki.archlinux.org/index.php/SANE)
 
-# show available scanners with `scanimage -L`
+# show available scanners with `scanimage --list-devices`
 DEVICE='pixma:MG3600_192.168.0.14'
 
-OUTPUT_FILE="$1"
-EXTENSION="${OUTPUT_FILE##*.}"
+GIVEN_OUTPUT_FILE="$1"
+GIVEN_EXTENSION="${GIVEN_OUTPUT_FILE##*.}"
 
-if [[ -z "$OUTPUT_FILE" ]]; then
-    echo "ERROR: Please provide output file."
+if [[ -z "$GIVEN_OUTPUT_FILE" ]]; then
+    echo "ERROR: Please provide output file name."
     exit 1
-elif [[ -e "$OUTPUT_FILE" ]]; then
-    echo "ERROR: File already exists."
+elif [[ -e "$GIVEN_OUTPUT_FILE" ]]; then
+    echo "ERROR: File $GIVEN_OUTPUT_FILE already exists."
     exit 1
 fi
 
+if [[ "$GIVEN_EXTENSION" = "pdf" ]]; then
+    EXTENSION="png"
+    OUTPUT_FILE=$(mktemp -u /tmp/scan.XXXX.png)
+else
+    EXTENSION="$GIVEN_EXTENSION"
+    OUTPUT_FILE="$GIVEN_OUTPUT_FILE"
+fi
+
+echo "Scanning..."
 scanimage --device "$DEVICE" --format="$EXTENSION" --output-file "$OUTPUT_FILE" --progress
+
+if [[ "$GIVEN_EXTENSION" = "pdf" ]]; then
+    convert "$OUTPUT_FILE" "$GIVEN_OUTPUT_FILE"
+    # rm "$OUTPUT_FILE" # doesn't hurt to keep it
+fi
