@@ -18,6 +18,11 @@ elif [[ -e "$GIVEN_OUTPUT_FILE" ]]; then
     exit 1
 fi
 
+GIVEN_OUTPUT_DIR=$(dirname "$GIVEN_OUTPUT_FILE")
+if [[ ! -d "$GIVEN_OUTPUT_DIR" ]]; then
+    mkdir "$GIVEN_OUTPUT_DIR"
+fi
+
 if [[ "$GIVEN_EXTENSION" = "pdf" ]]; then
     EXTENSION="png"
     OUTPUT_FILE=$(mktemp -u /tmp/scan.XXXX.png)
