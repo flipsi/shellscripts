@@ -40,7 +40,7 @@ require pactl
 # CONFIG #
 ##########
 
-DEFAULT_DURATION=30
+DEFAULT_DURATION=60
 
 # TODO: adjust and normalize volume for pool
 VOLUME_INITIAL=60
