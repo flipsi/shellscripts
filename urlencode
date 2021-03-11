@@ -1,9 +1,71 @@
 #!/bin/bash
-sed \
--e 's/%21/!/g' \
--e 's/%23/#/g' \
--e 's/%24/$/g' \
--e 's/%26/\&/g' \
--e "s/%27/'/g" \
--e 's/%28/(/g' \
--e 's/%29/)/g' $@
+set -e
+
+function print_help_msg()
+{
+  cat <<-EOF
+Utility to encode/decode characters that are reserved for URI according to RFC 3986.
+... without heavy machinery (only using sed).
+
+Usage: $(basename "$0") [--encode|--decode] <string>
+EOF
+}
+
+function encode()
+{
+    sed \
+    -e 's/!/%21/g' \
+    -e 's/#/%23/g' \
+    -e 's/\$/%24/g' \
+    -e 's/&/%26/g' \
+    -e "s/'/%27/g" \
+    -e 's/(/%28/g' \
+    -e 's/)/%29/g' \
+    -e 's/*/%2A/g' \
+    -e 's/+/%2B/g' \
+    -e 's/,/%2C/g' \
+    -e 's/\//%2F/g' \
+    -e 's/:/%3A/g' \
+    -e 's/;/%3B/g' \
+    -e 's/=/%3D/g' \
+    -e 's/?/%3F/g' \
+    -e 's/@/%40/g' \
+    -e 's/\[/%5B/g' \
+    -e 's/\]/%5D/g' \
+    <(echo "$1")
+}
+
+function decode()
+{
+    sed \
+    -e 's/%21/!/g' \
+    -e 's/%23/#/g' \
+    -e 's/%24/$/g' \
+    -e 's/%26/\&/g' \
+    -e "s/%27/'/g" \
+    -e 's/%28/(/g' \
+    -e 's/%29/)/g' \
+    -e 's/%2A/*/g' \
+    -e 's/%2B/+/g' \
+    -e 's/%2C/,/g' \
+    -e 's/%2F/\//g' \
+    -e 's/%3A/:/g' \
+    -e 's/%3B/;/g' \
+    -e 's/%3D/=/g' \
+    -e 's/%3F/?/g' \
+    -e 's/%40/@/g' \
+    -e 's/%5B/[/g' \
+    -e 's/%5D/]/g' \
+    <(echo "$1")
+}
+
+
+if [[ "$1" = "--help" ]]; then
+    print_help_msg
+elif [[ "$1" = "--decode" ]]; then
+    decode "$2"
+elif [[ "$1" = "--encode" ]]; then
+    encode "$2"
+else
+    encode "$1"
+fi
