@@ -5,7 +5,7 @@ set -e
 # Using SANE (https://wiki.archlinux.org/index.php/SANE)
 
 # show available scanners with `scanimage --list-devices`
-DEVICE='escl:http://192.168.0.14:80'
+SCAN_DEVICE="${SCAN_DEVICE:-escl:http://192.168.0.14:80}"
 
 GIVEN_OUTPUT_FILE="$1"
 GIVEN_EXTENSION="${GIVEN_OUTPUT_FILE##*.}"
@@ -31,8 +31,8 @@ else
     OUTPUT_FILE="$GIVEN_OUTPUT_FILE"
 fi
 
-echo "Scanning..."
-scanimage --device "$DEVICE" --format="$EXTENSION" --output-file "$OUTPUT_FILE" --progress
+echo "Scanning with device $SCAN_DEVICE..."
+scanimage --device "$SCAN_DEVICE" --format="$EXTENSION" --output-file "$OUTPUT_FILE" --progress
 
 if [[ "$GIVEN_EXTENSION" = "pdf" ]]; then
     convert "$OUTPUT_FILE" "$GIVEN_OUTPUT_FILE"
