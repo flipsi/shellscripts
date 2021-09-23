@@ -14,6 +14,7 @@ EOF
 function encode()
 {
     sed \
+    -e 's/ /%20/g' \
     -e 's/!/%21/g' \
     -e 's/#/%23/g' \
     -e 's/\$/%24/g' \
@@ -38,6 +39,7 @@ function encode()
 function decode()
 {
     sed \
+    -e 's/%20/ /g' \
     -e 's/%21/!/g' \
     -e 's/%23/#/g' \
     -e 's/%24/$/g' \
