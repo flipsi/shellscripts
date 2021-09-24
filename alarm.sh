@@ -50,6 +50,16 @@ VOLUME_INCREMENT_AMOUNT=5
 
 AUDIO_SRC= # will be set by arg or picked from pool
 AUDIO_SRC_POOL=(\
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
+    http://www.radioswissjazz.ch/live/mp3.m3u \
     http://192.211.51.158:5014 \
     http://209.236.126.18:8002 \
     http://198.7.62.157:8003 \
