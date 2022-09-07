@@ -26,7 +26,6 @@ echo -e "#######################################################################
 echo -e "\nRunning backup script at " $(date) "\n">>${LOGFILE}
 
 
-# host: obelix
 if [[ $(hostname) = "obelix" ]]; then
 
     # external hdd connected and mounted?
@@ -51,8 +50,7 @@ if [[ $(hostname) = "obelix" ]]; then
     fi
 fi
 
-# host: asterix
-if [[ $(hostname) = "asterix" ]]; then
+if [[ $(hostname) = "falbala" ]]; then
 
     # external hdd connected and mounted?
     if mountpoint -q "${EXTERNALHDD}"; then
@@ -61,7 +59,7 @@ if [[ $(hostname) = "asterix" ]]; then
 
         # contents of general data dirs in home should be copied on external hdd
         # (but not the other way around, because external hdd can contain
-        # many files that should not be on asterix)
+        # many files that should not be on our host)
         rsync -ruv "${HOME}/img" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
         rsync -ruv "${HOME}/cheatsheets" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
         rsync -ruv "${HOME}/docs-and-books" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
