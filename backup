@@ -71,8 +71,8 @@ if [[ $(hostname) = "falbala" ]]; then
         # (but not the other way around, because external hdd can contain
         # many files that should not be on our host)
         rsync -ruv "$HOME/img" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/cheatsheets" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/docs-and-books" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/doc-cheatsheets" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/doc" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
         rsync -ruv "$HOME/img-photo" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
         rsync -ruv "$HOME/img-wallpaper" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
         rsync -ruv "$HOME/people" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
