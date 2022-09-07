@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -o pipefail
+
 # Author: Philipp Moers <soziflip@gmail.com>
 
 # Automagical Backups
@@ -19,67 +22,74 @@ LOGFILE="$HOME/.backup.log"
 # path to external hdd
 EXTERNALHDD="/mnt/extern"
 
+# our host to backup from
+HOSTNAME=$(hostname)
+
+
 # create logfile if non-existent or touch it to mark execution of this script
-touch "${LOGFILE}"
-echo -e "\n\n\n" >>${LOGFILE}
-echo -e "###############################################################################" >>${LOGFILE}
-echo -e "\nRunning backup script at " $(date) "\n">>${LOGFILE}
+touch "$LOGFILE"
+# shellcheck disable=SC2129
+echo -e "\n\n\n" >>"$LOGFILE"
+echo -e "###############################################################################\n" >>"$LOGFILE"
+echo -e "Running backup script at $(date)\n">>"$LOGFILE"
 
 
-if [[ $(hostname) = "obelix" ]]; then
+if [[ $HOSTNAME = "obelix" ]]; then
 
     # external hdd connected and mounted?
-    if mountpoint -q "${EXTERNALHDD}"; then
+    if mountpoint -q "$EXTERNALHDD"; then
 
         # then start backup
 
+        # shellcheck disable=SC2129
         # contents of general data dirs in home should be copied on external hdd
         # (but not the other way around, because external hdd can contain
-        # many files that should not be on obelix)
-        rsync -ruvL "${HOME}/img" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
+        # many files that should not be on our host)
+        rsync -ruvL "$HOME/img" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
 
-        # some dirs only exists on obelix and should have a backup on external hdd
-        rsync -ruv "${HOME}/img-screenshots" "${EXTERNALHDD}/backup/obelix/" >>${LOGFILE} 2>&1
-        rsync -ruvL "${HOME}/recording" "${EXTERNALHDD}/backup/obelix/" >>${LOGFILE} 2>&1
+        # some dirs only exists on our host and should have a backup on external hdd
+        rsync -ruv "$HOME/img-screenshots" "$EXTERNALHDD/backup/$HOSTNAME/" >>"$LOGFILE" 2>&1
+        rsync -ruvL "$HOME/recording" "$EXTERNALHDD/backup/$HOSTNAME/" >>"$LOGFILE" 2>&1
 
         # music from external hdd to local hdd
-        rsync -ruv "${EXTERNALHDD}/data/music" "${HOME}/common/backup" >>${LOGFILE} 2>&1
+        rsync -ruv "$EXTERNALHDD/data/music" "$HOME/common/backup" >>"$LOGFILE" 2>&1
 
     else
-        echo -e "External HDD not found." >>${LOGFILE}
+        echo -e "External HDD not found." >>"$LOGFILE"
     fi
 fi
 
 if [[ $(hostname) = "falbala" ]]; then
 
     # external hdd connected and mounted?
-    if mountpoint -q "${EXTERNALHDD}"; then
+    if mountpoint -q "$EXTERNALHDD"; then
 
         # then start backup
 
+        # shellcheck disable=SC2129
         # contents of general data dirs in home should be copied on external hdd
         # (but not the other way around, because external hdd can contain
         # many files that should not be on our host)
-        rsync -ruv "${HOME}/img" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/cheatsheets" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/docs-and-books" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/img-photo" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/img-wallpaper" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/people" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/snd" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/things" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/vid-misc" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/vid-movie" "${EXTERNALHDD}/data/" >>${LOGFILE} 2>&1
+        rsync -ruv "$HOME/img" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/cheatsheets" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/docs-and-books" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/img-photo" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/img-wallpaper" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/people" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/snd" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/things" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/vid-misc" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/vid-movie" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
 
         # some dirs only exists on asterix and should have a backup on external hdd
-        rsync -ruv "${HOME}/img-screenshots" "${EXTERNALHDD}/backup/asterix/" >>${LOGFILE} 2>&1
-        rsync -ruv "${HOME}/misc" "${EXTERNALHDD}/backup/asterix/" >>${LOGFILE} 2>&1
+        rsync -ruv "$HOME/img-screenshots" "$EXTERNALHDD/backup/asterix/" >>"$LOGFILE" 2>&1
+        rsync -ruv "$HOME/misc" "$EXTERNALHDD/backup/asterix/" >>"$LOGFILE" 2>&1
 
         # TODO what about src-my?
 
     else
-        echo -e "External HDD not found." >>${LOGFILE}
+        echo -e "External HDD not found." >>"$LOGFILE"
     fi
 fi
 
-echo -e "Done.\n\n" >>${LOGFILE}
+echo -e "Done.\n\n" >>"$LOGFILE"
