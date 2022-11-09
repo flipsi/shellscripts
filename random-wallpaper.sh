@@ -89,7 +89,7 @@ function setWallpaperSymlinkI3() {
     if file "$wallpaper" | grep 'PNG image data' >/dev/null; then
         ln -s -f "$wallpaper" $HOME/.i3/wallpaper.png
     else
-        convert "$wallpaper" $HOME/.i3/wallpaper.png
+        convert "$wallpaper" -resize 2560x1440 $HOME/.i3/wallpaper.png
     fi
 }
 
