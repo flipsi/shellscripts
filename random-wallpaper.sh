@@ -79,7 +79,8 @@ function chooseWallpaper() {
 
 
 function setWallpaper() {
-    feh --bg-scale $wallpaper
+    # feh --bg-scale $wallpaper
+    feh --bg-fill $wallpaper
 }
 
 
