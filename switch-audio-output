@@ -1,34 +1,58 @@
 #!/bin/bash
 
+set -e
+
 # Switch the audio output device (e.g. between built-in and HDMI)
 
-# Author: tsvetan
+# Author: flipsi
+
+# Originally inspired from Author: tsvetan
 # http://ubuntuforums.org/archive/index.php/t-1370383.html
 
-declare -i sinks_count=`pacmd list-sinks | grep -c index:[[:space:]][[:digit:]]`
-declare -i active_sink_index=`pacmd list-sinks | sed -n -e 's/\*[[:space:]]index:[[:space:]]\([[:digit:]]\)/\1/p'`
-declare -i major_sink_index=$sinks_count-1
-declare -i next_sink_index=0
 
-if [ $active_sink_index -ne $major_sink_index ] ; then
-    next_sink_index=active_sink_index+1
-fi
-
-#change the default sink
-pacmd "set-default-sink ${next_sink_index}"
-
-#move all inputs to the new sink
-for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
-    pacmd "move-sink-input $app $next_sink_index"
-done
-
-#display notification
-declare -i ndx=0
-pacmd list-sinks | sed -n -e 's/device.description[[:space:]]=[[:space:]]"\(.*\)"/\1/p' | while read line; do
-    if [ $next_sink_index -eq $ndx ] ; then
-        notify-send -i notification-audio-volume-high "Sound output switched to" "$line"
-        exit
+function calculate_next_sink_index() {
+    # TODO: fix the wrong assumption that there is a n+1 sink
+    declare -i sinks_count=$(pacmd list-sinks | grep -c 'index:[[:space:]][[:digit:]]')
+    declare -i active_sink_index=$(pacmd list-sinks | sed -n -e 's/\*[[:space:]]index:[[:space:]]\([[:digit:]]\)/\1/p')
+    declare -i major_sink_index=$sinks_count-1
+    declare -i next_sink_index=0
+    if [ $active_sink_index -ne $major_sink_index ] ; then
+        next_sink_index=active_sink_index+1
     fi
-    ndx+=1
-done;
+    echo $next_sink_index
+}
 
+function set_default_sink() {
+    local sink="$1"
+    pacmd "set-default-sink $sink"
+}
+
+function move_all_inputs_to_sink() {
+    local sink="$1"
+    for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
+        pacmd "move-sink-input $app $sink"
+    done
+}
+
+function get_sink_description() {
+    local sink="$1"
+    declare -i ndx=0
+    pacmd list-sinks | sed -n -e 's/device.description[[:space:]]=[[:space:]]"\(.*\)"/\1/p' | while read line; do
+        if [ $sink -eq $ndx ] ; then
+            echo "$line"
+            exit
+        fi
+        ndx+=1
+    done;
+}
+
+function main() {
+    local next_sink=$(calculate_next_sink_index)
+    local sink_description=$(get_sink_description "$next_sink")
+    set_default_sink $next_sink
+    move_all_inputs_to_sink $next_sink
+    notify-send -i notification-audio-volume-high "Sound output switched to" "$sink_description"
+}
+
+
+main
