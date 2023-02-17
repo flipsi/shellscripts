@@ -2,13 +2,90 @@
 
 set -e
 
-# Switch the audio output device (e.g. between built-in and HDMI)
-
 # Author: flipsi
 
 # Originally inspired from Author: tsvetan
 # http://ubuntuforums.org/archive/index.php/t-1370383.html
 
+
+function print_usage() {
+  cat <<-EOF
+Change audio output device (pulse audio)
+(e.g. switch between built-in audio jack and HDMI)
+
+Usage: $(basename "$0") [OPTIONS]
+
+  OPTIONS:
+
+  --help                        Print this help message.
+  -a APP  | --app APP           Application name to switch sink for. If omitted, change every app.
+  -s NAME | --sink SINK_INDEX   Send every input to this output device.
+  -t | --toggle                 Send every input to "the other" device. Configured per host.
+
+  If none of -s or -t is given, cycle through sinks.
+
+EOF
+}
+
+
+TOGGLE_SINK_OPTION_1="BEHRINGER_UMC1820"
+TOGGLE_SINK_OPTION_2="DisplayLink_StarTech_DK31C3HDPD"
+
+
+function parse_arguments() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --help)
+        print_usage;
+        exit 0
+        ;;
+      -a)
+        APP="$2"
+        shift; shift
+        ;;
+      --app)
+        APP="$2"
+        shift; shift
+        ;;
+      -s)
+        SINK="$2"
+        shift; shift
+        ;;
+      --sink)
+        SINK="$2"
+        shift; shift
+        ;;
+      -t)
+        TOGGLE=true
+        shift
+        ;;
+      --toggle)
+        TOGGLE=true
+        shift
+        ;;
+      *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+  done
+}
+
+
+function get_app_index_from_name() {
+    local name_pattern="$1"
+    pacmd list-sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+}
+
+function get_sink_of_app() {
+    local input="$1"
+    pacmd list-sink-inputs | grep -i -A4 "index: $input" | grep 'sink:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+}
+
+function get_sink_index_from_name() {
+    local name_pattern="$1"
+    pacmd list-sinks | grep -i -B1 "$name_pattern" | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+}
 
 function calculate_next_sink_index() {
     # TODO: fix the wrong assumption that there is a n+1 sink
@@ -46,13 +123,45 @@ function get_sink_description() {
     done;
 }
 
-function main() {
+function cycle_sinks() {
     local next_sink=$(calculate_next_sink_index)
     local sink_description=$(get_sink_description "$next_sink")
-    set_default_sink $next_sink
-    move_all_inputs_to_sink $next_sink
+    if [[ -n "$APP" ]]; then
+        app_index=$(get_app_index_from_name "$APP")
+        pacmd move-sink-input "$app_index" "$next_sink"
+    else
+        set_default_sink $next_sink
+        move_all_inputs_to_sink $next_sink
+    fi
     notify-send -i notification-audio-volume-high "Sound output switched to" "$sink_description"
 }
 
+function toggle_sinks() {
+    if [[ -z "$APP" ]]; then
+        echo "Error: Please provide an app via --app to toggle sink for!"
+        exit 1
+    fi
+    app_index=$(get_app_index_from_name "$APP")
+    if [[ -z "$app_index" ]]; then
+        echo "No such app: $APP"
+        exit 1
+    fi
+    current_sink=$(get_sink_of_app "$app_index")
+    toggle_sink_option_1_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
+    if [[ "$current_sink" = "$toggle_sink_option_1_index" ]]; then
+        next_sink=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
+    else
+        next_sink=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
+    fi
+    pacmd move-sink-input "$app_index" "$next_sink"
+}
 
-main
+
+parse_arguments "$@"
+
+if [[ -n "$TOGGLE" ]]; then
+    toggle_sinks
+  else
+    cycle_sinks
+fi
+
