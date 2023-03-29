@@ -20,7 +20,7 @@ Usage: $(basename "$0") [OPTIONS]
   --help                        Print this help message.
   -a APP  | --app APP           Application name to switch sink for. If omitted, change every app.
   -s NAME | --sink SINK_INDEX   Send every input to this output device.
-  -t | --toggle                 Send every input to "the other" device. Configured per host.
+  -t | --toggle                 Send every input to "the other" device. Configured via TOGGLE_SINK_OPTION_1 and TOGGLE_SINK_OPTION_2.
 
   If none of -s or -t is given, cycle through sinks.
 
@@ -28,8 +28,8 @@ EOF
 }
 
 
-TOGGLE_SINK_OPTION_1="BEHRINGER_UMC1820"
-TOGGLE_SINK_OPTION_2="DisplayLink_StarTech_DK31C3HDPD"
+TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-BEHRINGER_UMC1820}"
+TOGGLE_SINK_OPTION_2="${TOGGLE_SINK_OPTION_2:-DisplayLink_StarTech_DK31C3HDPD}"
 
 
 function parse_arguments() {
