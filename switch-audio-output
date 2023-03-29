@@ -153,6 +153,10 @@ function toggle_sinks() {
     else
         next_sink=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
     fi
+    if [[ -z "$next_sink" ]]; then
+        echo "Error: One of the configured sinks could not be found!"
+        exit 1
+    fi
     pacmd move-sink-input "$app_index" "$next_sink"
 }
 
