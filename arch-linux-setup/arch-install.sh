@@ -141,10 +141,11 @@ mkinitcpio -p linux
 ######################
 
 systemctl enable netctl
+systemctl enable systemd-resolved.service
 
 # config in /etc/netctl
 
-# config /etc/resolv.conf or not
+# config /etc/resolv.conf manually if resolved does not work
 
 ###################
 # user management #

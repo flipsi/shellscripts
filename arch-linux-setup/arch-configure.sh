@@ -65,24 +65,36 @@ function install_yay()
     fi
 }
 
+function configure_pacman()
+{
+    sudo sed -i 's/^#Color/Color/' '/etc/pacman.conf'
+}
+
 function install_tools()
 {
     install_packages \
         bpytop \
         elinks \
+        fd \
         fish \
         ffmpegthumbnailer \
         fzf \
+        git-revise \
+        git-delta \
         highlight \
         htop \
         inetutils \
         lynx \
         mediainfo \
+        mlocate \
         odt2txt \
         ranger \
+        ripgrep \
         shellcheck \
+        the_silver_searcher \
         tig \
         tldr \
+        translate-shell \
         tmux
 }
 
@@ -170,7 +182,7 @@ function setup_password_store()
         mkdir "$HOME/.password-store"
         pass git init
         pass git remote add github git@github.com:flipsi/password-store.git
-        git branch --set-upstream-to=github/master main
+        # git branch --set-upstream-to=github/main main
         pass git pull
         echo_success "password store pulled."
     fi
@@ -191,6 +203,8 @@ function setup_password_store()
         gpg --import "tmp/gpg.secret.key" # if this hangs, see https://unix.stackexchange.com/a/432468/119362
         gpg --list-secret-keys
         echo_success "GPG key imported."
+        echo "Now trust your own key!"
+        gpg --edit-key "$GPG_KEY_ID" # trust the key ultimately!
     fi
 }
 
@@ -206,7 +220,7 @@ function install_i3_desktop()
 
     install_packages \
         i3-wm i3lock polybar dmenu rofi rofi-pass \
-        pulseaudio pavucontrol alsa-utils pamixer \
+        pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-utils pamixer \
         python dbus-python \
         dex picom unclutter feh \
         redshift \
@@ -215,7 +229,7 @@ function install_i3_desktop()
 
 function setup_vim_and_neovim()
 {
-    install_packages neovim nodejs python python-pynvim
+    install_packages neovim nodejs npm python python-pynvim
     echo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim
     if test -f "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim; then
         echo_skipped "vim-plug already installed."
@@ -233,6 +247,15 @@ function setup_vim_and_neovim()
     fi
 }
 
+function install_bluetooth()
+{
+    install_packages \
+        bluez bluez-utils blueman
+    sudo systemctl start bluetooth.service
+    sudo systemctl enable bluetooth.service
+}
+
+
 function install_desktop_apps()
 {
     install_packages \
@@ -241,18 +264,21 @@ function install_desktop_apps()
         sxiv \
         telegram-desktop \
         vivaldi browserpass browserpass-chromium \
+        chromium \
         zathura zathura-pdf-poppler poppler
 }
 
 
 install_tools
 install_yay
+configure_pacman
 setup_ssh
 setup_fonts
 clone_and_install_dotfiles
 # setup_password_store
 setup_power_management
 install_i3_desktop
+install_bluetooth
 setup_vim_and_neovim
 install_desktop_apps
 
