@@ -7,6 +7,7 @@ set -e
 # Originally inspired from Author: tsvetan
 # http://ubuntuforums.org/archive/index.php/t-1370383.html
 
+# shellcheck disable=SC2155
 
 function print_usage() {
   cat <<-EOF
@@ -27,6 +28,17 @@ Usage: $(basename "$0") [OPTIONS]
 EOF
 }
 
+# There is pactl and pacmd.
+# Functionality overlaps, but pacmd seems to be more powerful.
+# However, pacmd does not support pipewire, whereas pactl can be used via pipewire-pulse.
+# So I rewrote this script to use pactl instead of pactl so I can use it with pipewire as well.
+
+function use_pacmd() {
+    if command -v pacmd >/dev/null 2>&1; then
+        echo "YES"
+    fi
+    # TODO: also check whether pacmd is installed but prints "No PulseAudio daemon running"
+}
 
 TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-BEHRINGER_UMC1820}"
 TOGGLE_SINK_OPTION_2="${TOGGLE_SINK_OPTION_2:-DisplayLink_StarTech_DK31C3HDPD}"
@@ -74,57 +86,93 @@ function parse_arguments() {
 
 function get_app_index_from_name() {
     local name_pattern="$1"
-    pacmd list-sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    if [[ -n "$USE_PACMD" ]]; then
+        pacmd list-sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    else
+        pactl list sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep '^Sink Input' | sed -E 's/.* #([[:digit:]]+).*/\1/'
+    fi
 }
 
 function get_any_app() {
-    pacmd list-sink-inputs | grep -i "application.name" | sed -E 's/.*= "(.+)".*/\1/' | head -n1
+    if [[ -n $USE_PACMD ]]; then
+        pacmd list-sink-inputs | grep -i "application.name" | sed -E 's/.*= "(.+)".*/\1/' | head -n1
+    else
+        pactl list sink-inputs | grep -i "application.name" | sed -E 's/.*= "(.+)".*/\1/' | head -n1
+    fi
 }
 
 function get_sink_of_app() {
     local app="$1"
-    pacmd list-sink-inputs | grep -i -A4 "index: $app" | grep 'sink:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    if [[ -n $USE_PACMD ]]; then
+        pacmd list-sink-inputs | grep -i -A4 "index: $app" | grep 'sink:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    else
+        pactl list sink-inputs | grep -i -A4 "Sink Input #$app" | grep 'Sink:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    fi
 }
 
 function get_sink_index_from_name() {
     local name_pattern="$1"
-    pacmd list-sinks | grep -i -B1 "$name_pattern" | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    if [[ -n $USE_PACMD ]]; then
+        pacmd list-sinks | grep -i -B1 "$name_pattern" | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+    else
+        pactl list sinks | grep -i -B2 "Name:.*$name_pattern" | grep 'Sink' | sed -E 's/Sink #([[:digit:]]+).*/\1/'
+    fi
 }
 
 function calculate_next_sink_index() {
     # TODO: fix the wrong assumption that there is a n+1 sink
+    # TODO: implement this for pactl
     declare -i sinks_count=$(pacmd list-sinks | grep -c 'index:[[:space:]][[:digit:]]')
     declare -i active_sink_index=$(pacmd list-sinks | sed -n -e 's/\*[[:space:]]index:[[:space:]]\([[:digit:]]\)/\1/p')
     declare -i major_sink_index=$sinks_count-1
     declare -i next_sink_index=0
     if [ $active_sink_index -ne $major_sink_index ] ; then
-        next_sink_index=active_sink_index+1
+        next_sink_index=$((active_sink_index + 1))
     fi
     echo $next_sink_index
 }
 
 function set_default_sink() {
     local sink="$1"
-    pacmd "set-default-sink $sink"
+    if [[ -n $USE_PACMD ]]; then
+        pacmd "set-default-sink $sink"
+    else
+        pacmd "set-default-sink $sink"
+    fi
+}
+
+function move_sink_input() {
+    local app_index="$1"
+    local next_sink="$2"
+    if [[ -n $USE_PACMD ]]; then
+        pacmd move-sink-input "$app_index" "$next_sink"
+    else
+        pactl move-sink-input "$app_index" "$next_sink"
+    fi
 }
 
 function move_all_inputs_to_sink() {
     local sink="$1"
-    for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
-        pacmd "move-sink-input $app $sink"
+    # for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
+    for app in $(pactl list sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
+        move-sink-input "$app" "$sink"
     done
 }
 
 function get_sink_description() {
     local sink="$1"
-    declare -i ndx=0
-    pacmd list-sinks | sed -n -e 's/device.description[[:space:]]=[[:space:]]"\(.*\)"/\1/p' | while read line; do
-        if [ $sink -eq $ndx ] ; then
-            echo "$line"
-            exit
-        fi
-        ndx+=1
-    done;
+    if [[ -n $USE_PACMD ]]; then
+        declare -i ndx=0
+        pacmd list-sinks | sed -n -e 's/device.description[[:space:]]=[[:space:]]"\(.*\)"/\1/p' | while read line; do
+            if [ "$sink" -eq $ndx ] ; then
+                echo "$line"
+                exit
+            fi
+            ndx+=1
+        done;
+    else
+        pactl list sinks | grep -i -A3 "Sink #$sink" | grep 'Description:' | sed -E 's/.*Description: ()/\1/'
+    fi
 }
 
 function cycle_sinks() {
@@ -132,10 +180,10 @@ function cycle_sinks() {
     local sink_description=$(get_sink_description "$next_sink")
     if [[ -n "$APP" ]]; then
         app_index=$(get_app_index_from_name "$APP")
-        pacmd move-sink-input "$app_index" "$next_sink"
+        move_sink_input "$app_index" "$next_sink"
     else
-        set_default_sink $next_sink
-        move_all_inputs_to_sink $next_sink
+        set_default_sink "$next_sink"
+        move_all_inputs_to_sink "$next_sink"
     fi
     notify-send -i notification-audio-volume-high "Sound output switched to" "$sink_description"
 }
@@ -161,22 +209,22 @@ function get_other_sink() {
         echo "Error: One of the configured sinks could not be found!"
         exit 1
     fi
-    echo $other_sink
+    echo "$other_sink"
 }
 
 function toggle_sinks_for_app() {
     local app="$1"
     app_index=$(get_app_index_from_name "$app")
     other_sink=$(get_other_sink "$app_index")
-    pacmd move-sink-input "$app_index" "$other_sink"
+    move_sink_input "$app_index" "$other_sink"
 }
 
 function toggle_sinks_for_all_apps() {
     local app=$(get_any_app)
     app_index=$(get_app_index_from_name "$app")
     other_sink=$(get_other_sink "$app_index")
-    set_default_sink $other_sink
-    move_all_inputs_to_sink $other_sink
+    set_default_sink "$other_sink"
+    move_all_inputs_to_sink "$other_sink"
 }
 
 parse_arguments "$@"
