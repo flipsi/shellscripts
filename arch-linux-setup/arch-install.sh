@@ -157,8 +157,22 @@ passwd
 # create my user
 useradd -m -g users -G wheel flipsi
 passwd flipsi
+
+# configure sudo
+#
 visudo
-# uncomment `wheel` thing
+# 1) uncomment `wheel` thing to grant members sudo privileges
+#
+# OPTIONAL:
+#
+# 2) Allow more than 3 attempts before failure by adding this line:
+# Defaults passwd_tries=5
+
+# 3) Don't ask again after 5 minutes by adding this line:
+# Defaults timestamp_timeout=30
+
+# 4) Don't time out with sudden prompt, e.g. when buildind and installing packages with yay by adding this line {https://wiki.archlinux.org/title/sudo}:
+# Defaults passwd_timeout=0
 
 
 
