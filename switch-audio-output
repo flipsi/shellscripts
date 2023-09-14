@@ -87,9 +87,9 @@ function parse_arguments() {
 function get_app_index_from_name() {
     local name_pattern="$1"
     if [[ -n "$USE_PACMD" ]]; then
-        pacmd list-sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
+        pacmd list-sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/' | head -n1
     else
-        pactl list sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep '^Sink Input' | sed -E 's/.* #([[:digit:]]+).*/\1/'
+        pactl list sink-inputs | grep -i -B20 "application.name = .$name_pattern." | grep '^Sink Input' | sed -E 's/.* #([[:digit:]]+).*/\1/' | head -n1
     fi
 }
 
