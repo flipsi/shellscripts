@@ -95,19 +95,21 @@ function install_tools()
         tig \
         tldr \
         translate-shell \
+        trash-cli \
         tmux
 }
 
 function setup_fonts()
 {
     install_packages \
-        ttf-inconsolata \
-        ttf-dejavu \
         noto-fonts \
         noto-fonts-emoji \
+        ttf-dejavu \
         ttf-fira-mono \
-        ttf-roboto \
         ttf-fira-sans
+        ttf-inconsolata \
+        ttf-meslo-nerd \
+        ttf-roboto \
 
     setup_font_pragmata_pro
 }
@@ -194,7 +196,9 @@ function setup_password_store()
         echo "Getting GPG key from $OTHER_HOST..."
         ping -c 1 "$OTHER_HOST"
         ssh "$OTHER_HOST" "gpg --list-secret-keys"
+        # shellcheck disable=SC2029
         ssh "$OTHER_HOST" "gpg --export --armor $GPG_KEY_ID > tmp/gpg.public.key"
+        # shellcheck disable=SC2029
         ssh "$OTHER_HOST" "gpg --export-secret-keys --armor $GPG_KEY_ID > tmp/gpg.secret.key" # FIXME requires interactive passphrase. Do this manually
         scp "$OTHER_HOST:tmp/gpg.public.key" "tmp/gpg.public.key"
         scp "$OTHER_HOST:tmp/gpg.secret.key" "tmp/gpg.secret.key"
@@ -222,14 +226,24 @@ function install_i3_desktop()
         i3-wm i3lock polybar dmenu rofi rofi-pass \
         pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-utils pamixer \
         python dbus-python \
-        dex picom unclutter feh \
+        libnotify notification-daemon \
+        dex picom redshift unclutter feh xfce4-screenshooter \
         redshift \
-        xsel xclip clipmenu
+        xsel xclip clipmenu \
+        cups cups-pdf
+
+    mkdir -p "$HOME/img"
+    mkdir -p "$HOME/img-screenshots"
+    mkdir -p "$HOME/img-wallpaper"
+    mkdir -p "$HOME/misc"
+    mkdir -p "$HOME/src"
+    mkdir -p "$HOME/tmp"
+    mkdir -p "$HOME/work"
 }
 
 function setup_vim_and_neovim()
 {
-    install_packages neovim nodejs npm python python-pynvim
+    install_packages neovim nodejs npm python python-pynvim ctags tree-sitter tree-sitter-cli
     echo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim
     if test -f "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim; then
         echo_skipped "vim-plug already installed."
