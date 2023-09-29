@@ -115,7 +115,7 @@ function get_sink_index_from_name() {
     if [[ -n $USE_PACMD ]]; then
         pacmd list-sinks | grep -i -B1 "$name_pattern" | grep 'index:' | sed -E 's/.*: ([[:digit:]]+).*/\1/'
     else
-        pactl list sinks | grep -i -B2 "Name:.*$name_pattern" | grep 'Sink' | sed -E 's/Sink #([[:digit:]]+).*/\1/'
+        pactl list sinks | grep -i -B2 "Name:.*$name_pattern" | grep 'Sink' | sed -E 's/Sink #([[:digit:]]+).*/\1/' | tr -d '\n'
     fi
 }
 
@@ -132,12 +132,22 @@ function calculate_next_sink_index() {
     echo $next_sink_index
 }
 
+function get_default_sink() {
+    local index
+    if [[ -n $USE_PACMD ]]; then
+        index=$(pacmd "get-default-sink")
+    else
+        index=$(pactl "get-default-sink")
+    fi
+    get_sink_index_from_name "$index"
+}
+
 function set_default_sink() {
     local sink="$1"
     if [[ -n $USE_PACMD ]]; then
         pacmd "set-default-sink $sink"
     else
-        pacmd "set-default-sink $sink"
+        pactl "set-default-sink" $sink
     fi
 }
 
@@ -153,10 +163,15 @@ function move_sink_input() {
 
 function move_all_inputs_to_sink() {
     local sink="$1"
-    # for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
-    for app in $(pactl list sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
-        move-sink-input "$app" "$sink"
-    done
+    if [[ -n $USE_PACMD ]]; then
+        for app in $(pacmd list-sink-inputs | sed -n -e 's/index:[[:space:]]\([[:digit:]]\)/\1/p'); do
+            move_sink_input "$app" "$sink"
+        done
+    else
+        for app in $(pactl list sink-inputs | sed -n -e 's/Sink Input #\([[:digit:]]\)/\1/p'); do
+            move_sink_input "$app" "$sink"
+        done
+    fi
 }
 
 function get_sink_description() {
@@ -190,16 +205,17 @@ function cycle_sinks() {
 
 function get_other_sink() {
     local app_index="$1"
-    if [[ -z "$app_index" ]]; then
-        echo "Error: Please provide an app index!"
-        exit 1
+    if [[ -n "$app_index" ]]; then
+        current_sink=$(get_sink_of_app "$app_index")
+    else
+        current_sink=$(get_default_sink)
     fi
-    current_sink=$(get_sink_of_app "$app_index")
     if [[ -z "$current_sink" ]]; then
         echo "Error: Sink of app $app_index could not be found!"
         exit 1
     fi
     toggle_sink_option_1_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
+    toggle_sink_option_2_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
     if [[ "$current_sink" = "$toggle_sink_option_1_index" ]]; then
         other_sink=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
     else
@@ -220,9 +236,7 @@ function toggle_sinks_for_app() {
 }
 
 function toggle_sinks_for_all_apps() {
-    local app=$(get_any_app)
-    app_index=$(get_app_index_from_name "$app")
-    other_sink=$(get_other_sink "$app_index")
+    other_sink=$(get_other_sink)
     set_default_sink "$other_sink"
     move_all_inputs_to_sink "$other_sink"
 }
