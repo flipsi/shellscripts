@@ -241,6 +241,12 @@ function install_i3_desktop()
     mkdir -p "$HOME/work"
 }
 
+function setup_printer()
+{
+    install_packages cups cups-pdf brother-hll2375dw
+    echo_warning "Driver installed. Now please install printer via CUPS web API (http://localhost:631/admin/)."
+}
+
 function setup_vim_and_neovim()
 {
     install_packages neovim nodejs npm python python-pynvim ctags tree-sitter tree-sitter-cli
@@ -292,6 +298,7 @@ clone_and_install_dotfiles
 # setup_password_store
 setup_power_management
 install_i3_desktop
+# setup_printer
 install_bluetooth
 setup_vim_and_neovim
 install_desktop_apps
