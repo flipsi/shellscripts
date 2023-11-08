@@ -91,12 +91,14 @@ function install_tools()
         ranger \
         ripgrep \
         shellcheck \
+        sox \
         the_silver_searcher \
         tig \
         tldr \
         translate-shell \
         trash-cli \
-        tmux
+        tmux \
+        vlc
 }
 
 function setup_fonts()
@@ -106,7 +108,7 @@ function setup_fonts()
         noto-fonts-emoji \
         ttf-dejavu \
         ttf-fira-mono \
-        ttf-fira-sans
+        ttf-fira-sans \
         ttf-inconsolata \
         ttf-meslo-nerd \
         ttf-roboto \
@@ -282,11 +284,20 @@ function install_desktop_apps()
         alacritty \
         spotify playerctl \
         sxiv \
+        gcolor3 \
+        zsa-keymapp-bin \
         telegram-desktop \
         vivaldi browserpass browserpass-chromium \
         chromium \
         zathura zathura-pdf-poppler poppler
 }
+
+function install_misc()
+{
+    install_packages \
+        fuse-common fuse2 ntfs-3g
+}
+
 
 
 install_tools
@@ -302,5 +313,5 @@ install_i3_desktop
 install_bluetooth
 setup_vim_and_neovim
 install_desktop_apps
-
+install_misc
 
