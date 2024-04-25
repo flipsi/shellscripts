@@ -90,7 +90,9 @@ function install_tools()
         odt2txt \
         ranger \
         ripgrep \
+        rsync \
         shellcheck \
+        speedtest-cli \
         sox \
         the_silver_searcher \
         tig \
