@@ -291,6 +291,7 @@ function install_desktop_apps()
 {
     install_packages \
         alacritty \
+        thunar \
         spotify playerctl \
         sxiv \
         gcolor3 \
@@ -298,6 +299,7 @@ function install_desktop_apps()
         telegram-desktop \
         vivaldi browserpass browserpass-chromium \
         chromium \
+        qutebrowser \
         zathura zathura-pdf-poppler poppler
 }
 
