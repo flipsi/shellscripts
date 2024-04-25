@@ -70,6 +70,13 @@ function configure_pacman()
     sudo sed -i 's/^#Color/Color/' '/etc/pacman.conf'
 }
 
+function configure_pam_faillock()
+{
+    # Because the default behavior of being locked out for 10 minutes after 3 failed login attempts is very annoying.
+    sudo sed -E -i 's/^(# )?deny = .*/deny = 9/' '/etc/security/faillock.conf'
+    sudo sed -E -i 's/^(# )?unlock_time = .*/unlock_time = 120/' '/etc/security/faillock.conf'
+}
+
 function install_tools()
 {
     install_packages \
@@ -305,6 +312,7 @@ function install_misc()
 install_tools
 install_yay
 configure_pacman
+configure_pam_faillock
 setup_ssh
 setup_fonts
 clone_and_install_dotfiles
