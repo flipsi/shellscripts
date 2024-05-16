@@ -83,30 +83,33 @@ function install_tools()
         bpytop \
         elinks \
         fd \
-        fish \
         ffmpegthumbnailer \
+        fish \
         fzf \
-        git-revise \
         git-delta \
+        git-revise \
         highlight \
         htop \
         inetutils \
+        lsof \
         lynx \
         mediainfo \
         mlocate \
+        ncdu \
         odt2txt \
+        pydf \
         ranger \
         ripgrep \
         rsync \
         shellcheck \
-        speedtest-cli \
         sox \
+        speedtest-cli \
         the_silver_searcher \
         tig \
         tldr \
+        tmux \
         translate-shell \
         trash-cli \
-        tmux \
         vlc
 }
 
