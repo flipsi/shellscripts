@@ -7,6 +7,8 @@ if [[ "$SUSER" = "root" ]]; then
     exit 1
 fi
 
+# TODO: use terminal colors!
+
 function echo_success()
 {
     echo "[SUCCESS] $1"
@@ -75,6 +77,49 @@ function configure_pam_faillock()
     # Because the default behavior of being locked out for 10 minutes after 3 failed login attempts is very annoying.
     sudo sed -E -i 's/^(# )?deny = .*/deny = 9/' '/etc/security/faillock.conf'
     sudo sed -E -i 's/^(# )?unlock_time = .*/unlock_time = 120/' '/etc/security/faillock.conf'
+}
+
+function configure_keyboard_layout()
+{
+    # For Linux console
+    LAYOUT="de-latin1-nodeadkeys"
+    if localectl status | grep -q "VC Keymap: $LAYOUT"; then
+        echo_skipped "Linux console keyboard layout already set to '$LAYOUT'."
+    else
+        if localectl list-keymaps | grep -q "$LAYOUT"; then
+            FILE="/etc/vonsole.conf"
+            if ! test -f "$FILE"; then
+                sudo touch "$FILE"
+            fi
+            # TODO: doesn't work! fix this!
+            # TODO: move this "ensure line in file" thing to a proper function
+            sourcestring="KEYMAP=$LAYOUT"
+            echo sourcestring $sourcestring
+            echo file $FILE
+            sudo grep -F "$sourcestring" "$FILE"
+            sudo grep -q -F "$sourcestring" "$FILE"  || echo "$sourcestring" | sudo tee -a "$FILE"
+            echo_success "Linux console layout set to '$LAYOUT'."
+        else
+            echo_warning "Linux console layout '$LAYOUT' not found!"
+        fi
+    fi
+
+    # For X11
+    FILE="/etc/X11/xorg.conf.d/00-keyboard.conf"
+    if test -f "$FILE"; then
+        echo_skipped "X11 keyboard config already exist."
+    else
+        sudo tee "$FILE" <<EOF
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "de,us"
+        Option "XkbModel" "pc104"
+        Option "XkbVariant" "nodeadkeys"
+EndSection
+EOF
+    echo_success "X11 keyboard layout set to 'de' (nodeadkeys variant)."
+    fi
 }
 
 function install_tools()
@@ -313,18 +358,18 @@ function install_misc()
 }
 
 
-
 install_tools
 install_yay
 configure_pacman
 configure_pam_faillock
+configure_keyboard_layout
 setup_ssh
 setup_fonts
 clone_and_install_dotfiles
-# setup_password_store
+# # setup_password_store
 setup_power_management
 install_i3_desktop
-# setup_printer
+# # setup_printer
 install_bluetooth
 setup_vim_and_neovim
 install_desktop_apps
