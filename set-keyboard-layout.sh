@@ -5,6 +5,14 @@
 set -e
 
 
+# TODO: Automatically execute this script and document
+# https://unix.stackexchange.com/a/65892/119362
+# https://linuxconfig.org/tutorial-on-how-to-write-basic-udev-rules-in-linux
+# > cat /etc/udev/rules.d/120-moonlander-keyboard-layout.rules
+# ATTRS{idVendor}=="3297", ATTRS{idProduct}=="1969", RUN+="/home/sflip/shellscripts/set-keyboard-layout.sh"
+# TODO: have to set DISPLAY?
+
+
 function _print_help_msg() {
     cat <<-EOF
 Set keyboard layout according on my use cases.
