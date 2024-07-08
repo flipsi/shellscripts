@@ -133,6 +133,7 @@ function install_tools()
         fzf \
         git-delta \
         git-revise \
+        gnu-netcat \
         highlight \
         htop \
         inetutils \
