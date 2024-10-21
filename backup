@@ -1,95 +1,193 @@
 #!/bin/bash
 
-set -e
+set -o errexit
+set -o nounset
 set -o pipefail
 
+# backup
+# A script to create incremental backups with hardlinks (for efficiency).
+#
 # Author: Philipp Moers <soziflip@gmail.com>
+#
+# The script is meant to be run on a regular basis without any arguments e.g. as a cron job.
+# It can be run manually in addition to that.
+#
+# The script is for one way backups.
+# To sync directories across hosts, I use Syncthing.
+# The one-way incremental nature means that deletions will be reflected in future backups, but old
+# snapshots will retain the data, so nothing is lost.
+#
+# In the default synced directory the file 'README.md' explains order and file structure.
+# The file 'tidy.txt' on external hard drives is outdated.
+#
+# The implementation basically wraps rsync.
+# Inspired by https://digitalis.io/blog/linux/incremental-backups-with-rsync-and-hard-links/
 
-# Automagical Backups
 
-# Note: It should be practical to run this script as a cron job
+#############################
+# CONFIGURATION STARTS HERE #
+#############################
 
-# Note: I use rsync for one way backups.
-#       To sync directories, unison may be a better approach.
+# Directory in which to create the backups:
+# -----------------------------------------
 
-# Note: on external hdd there is a file 'tidy.txt' that explains
-#       order and file structure
+# $BACKUP_DIR can be set via command line argument (--backup-dir)
+DEFAULT_BACKUP_DIR="/mnt/wd-4tb/backup" # default value
+
+# File structure that will be created in $BACKUP_DIR:
+# /synced/latest
+# /synced/$DATE/foo
+# /synced/$DATE/bar
+# /unsynced/$HOSTNAME/latest
+# /unsynced/$HOSTNAME/$DATE/baz
+# /unsynced/$HOSTNAME/$DATE/quz
 
 
-# where to log what happened
-LOGFILE="$HOME/.backup.log"
+# Directories that should be backed up:
+# -------------------------------------
 
-# path to external hdd
-EXTERNALHDD="/mnt/extern"
+# These are expected to be synced externally, so *not* backed up in per-host subdirectories.
+# Backups will be created in the `synced` directory.
+# If they don't exist, they will just be skipped.
+# If they do exist, but have not been synced, only the present content will be in the backup and
+# other newer/older backups may contain other data. This may be confusing, but not cause data loss.
+# So it still would be best to sync before running this backup script.
+SYNCED_SOURCES=(
+    "$HOME/Sync"
+    "$HOME/img-photo"
+    # "$HOME/img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
+    # "$HOME/img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
+    "$HOME/recording"
+    "$HOME/vid"
+    "$HOME/vid-misc"
+    "$HOME/vid-movie"
+    "$HOME/work/code-intelligence"
+    "$HOME/work/reply"
+)
 
-# our host to backup from
+# These are not expected to be synced, so backed up in per-host subdirectories.
+# Backups will be created in the `unsynced` directory under the hostname.
+# If they don't exist, they will just be skipped.
+UNSYNCED_SOURCES=(
+    "$HOME/.gnupg"
+    "$HOME/.local/share/mail"
+    "$HOME/.password-store"
+    "$HOME/.ssh"
+    "$HOME/opt"
+    "$HOME/os"
+    "$HOME/projects" # subdirs should be in a remove git repository, but hey
+    "$HOME/public-html"
+    "$HOME/work-projects/code-intelligence"
+    "$HOME/work-projects/reply"
+)
+
+# There may also be an "archive" directory with not-meant-to-change-anymore data.
+# So we would not need incremental backups for that.
+# Also, the data does not have to live in directories per host, despite missing sync.
+# TODO: I may want to "back it up" with this script, i.e. make a redundant copy of something that I
+# want to archive. (Would have to be done without rsync's `--delete` flag!)
+# TODO: Also find a mechanism to "sync" archives across multiple hard drives? Seems ironic.
+
+###########################
+# CONFIGURATION ENDS HERE #
+###########################
+
+DATE_HUMAN_READABLE="$(date +%Y-%m-%d-%H-%M)"
+DATE="$(date +%Y-%m-%d-%H-%M)"
+TIME=$(date +%s)
+
+LOG_DIR="$HOME/.backup.log"
+LOG_FILE="$LOG_DIR/backup.$DATE.log"
+
 HOSTNAME=$(hostname)
 
-
-# create logfile if non-existent or touch it to mark execution of this script
-touch "$LOGFILE"
-# shellcheck disable=SC2129
-echo -e "\n\n\n" >>"$LOGFILE"
-echo -e "###############################################################################\n" >>"$LOGFILE"
-echo -e "Running backup script at $(date)\n">>"$LOGFILE"
+RSYNC_OPTS=("--verbose" "--archive" "--delete")
+RSYNC_OPTS+=("--exclude='.cache'")
 
 
-if [[ $HOSTNAME = "obelix" ]]; then
+function _print_help_msg()
+{
+    cat <<-EOF
+Create incremental backup of some configured files in $HOME.
 
-    # external hdd connected and mounted?
-    if mountpoint -q "$EXTERNALHDD"; then
+Usage: $(basename "$0") [--backup-dir /path/to/backup/dir]
 
-        # then start backup
+If no backup directory is given, $DEFAULT_BACKUP_DIR is used as a default.
+EOF
+}
 
-        # shellcheck disable=SC2129
-        # contents of general data dirs in home should be copied on external hdd
-        # (but not the other way around, because external hdd can contain
-        # many files that should not be on our host)
-        rsync -ruvL "$HOME/img" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
 
-        # some dirs only exists on our host and should have a backup on external hdd
-        rsync -ruv "$HOME/img-screenshots" "$EXTERNALHDD/backup/$HOSTNAME/" >>"$LOGFILE" 2>&1
-        rsync -ruvL "$HOME/recording" "$EXTERNALHDD/backup/$HOSTNAME/" >>"$LOGFILE" 2>&1
+function _create_backup()
+{
+    things=("$@")
+    # Make sure to set $BACKUP_LIST env, too! (can't accept additional args)
 
-        # music from external hdd to local hdd
-        rsync -ruv "$EXTERNALHDD/data/music" "$HOME/common/backup" >>"$LOGFILE" 2>&1
+    DESTINATION="$BACKUP_LIST/$DATE"
+    LATEST="$BACKUP_LIST/latest"
 
-    else
-        echo -e "External HDD not found." >>"$LOGFILE"
+    LOCAL_RSYNC_OPTS=("${RSYNC_OPTS[@]}")
+    if [ -d "$LATEST" ]; then
+        LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST")
     fi
+
+    mkdir -p "$DESTINATION"
+
+    for thing in "${things[@]}"; do
+        echo -e "\nBacking up $thing ..."
+        if ! test -e "$thing"; then
+            echo "WARNING: $thing not found! Skipping."
+        else
+            echo "rsync ${LOCAL_RSYNC_OPTS[*]} $thing $DESTINATION"
+            env rsync "${LOCAL_RSYNC_OPTS[@]}" "$thing" "$DESTINATION"
+        fi
+    done
+
+    rm -f "$LATEST"
+    ln -s "$DESTINATION" "$LATEST"
+}
+
+
+function _main()
+{
+    echo "Started backup at $DATE_HUMAN_READABLE"
+    # if ! mountpoint -q "$BACKUP_DIR"; then    # test if mounted ($BACKUP_DIR as mountpoint)
+    if ! test -d "$BACKUP_DIR"; then    # ($BACKUP_DIR as subdir of mountpoint)
+        echo "FATAL ERROR: Backup directory $BACKUP_DIR not found!"
+        exit 1
+    fi
+
+    # SYNCED_SOURCES
+    BACKUP_LIST="$BACKUP_DIR/synced"
+    mkdir -p "$BACKUP_LIST"
+    _create_backup "${SYNCED_SOURCES[@]}"
+
+    # UNSYNCED_SOURCES
+    BACKUP_LIST="$BACKUP_DIR/unsynced/$HOSTNAME"
+    mkdir -p "$BACKUP_LIST"
+    _create_backup "${UNSYNCED_SOURCES[@]}"
+
+    DATE_FINISHED="$(date +%Y-%m-%d-%H-%M)"
+    TIME_FINISHED=$(date +%s)
+    EXECUTION_TIME=$((TIME_FINISHED - TIME))
+
+    # TODO: backup archive to archive dir (without `--delete` flag)
+
+    echo # newline
+    echo "Finished backup at $DATE_FINISHED within $EXECUTION_TIME seconds."
+    echo "This log has been written to $LOG_FILE"
+}
+
+
+if [[ "${1-default}" = "--help" ]]; then
+    _print_help_msg
+    exit
+elif [[ "${1-default}" = "--backup-dir" ]]; then
+    BACKUP_DIR="${2-$DEFAULT_BACKUP_DIR}"
+else
+    BACKUP_DIR="$DEFAULT_BACKUP_DIR"
 fi
 
-if [[ $(hostname) = "falbala" ]]; then
-
-    # external hdd connected and mounted?
-    if mountpoint -q "$EXTERNALHDD"; then
-
-        # then start backup
-
-        # shellcheck disable=SC2129
-        # contents of general data dirs in home should be copied on external hdd
-        # (but not the other way around, because external hdd can contain
-        # many files that should not be on our host)
-        rsync -ruv "$HOME/img" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/doc-cheatsheets" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/doc" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/img-photo" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/img-wallpaper" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/people" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/snd" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/things" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/vid-misc" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/vid-movie" "$EXTERNALHDD/data/" >>"$LOGFILE" 2>&1
-
-        # some dirs only exists on asterix and should have a backup on external hdd
-        rsync -ruv "$HOME/img-screenshots" "$EXTERNALHDD/backup/asterix/" >>"$LOGFILE" 2>&1
-        rsync -ruv "$HOME/misc" "$EXTERNALHDD/backup/asterix/" >>"$LOGFILE" 2>&1
-
-        # TODO what about src-my?
-
-    else
-        echo -e "External HDD not found." >>"$LOGFILE"
-    fi
-fi
-
-echo -e "Done.\n\n" >>"$LOGFILE"
+mkdir -p "$LOG_DIR"
+touch "$LOG_FILE"
+exec > >(tee "$LOG_FILE") 2>&1 # log to both, stdout/stderr and log file
+_main
