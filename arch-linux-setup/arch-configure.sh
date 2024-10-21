@@ -137,6 +137,7 @@ function install_tools()
         highlight \
         htop \
         inetutils \
+        joshuto \
         lsof \
         lynx \
         mediainfo \
@@ -144,11 +145,11 @@ function install_tools()
         ncdu \
         odt2txt \
         pydf \
-        ranger \
         ripgrep \
         rsync \
         shellcheck \
         sox \
+        source-highlight \
         speedtest-cli \
         the_silver_searcher \
         tig \
@@ -222,14 +223,17 @@ function clone_and_install_dotfiles()
     else
         echo "Cloning dotfiles..."
         git clone --recursive "$DOTFILES_GIT_URL" "$HOME/dotfiles"
-        "$HOME/dotfiles./install.sh --all"
-        echo_success "dotfiles installed."
+        echo_success "dotfiles cloned."
     fi
+    "$HOME/dotfiles/install.sh" --all
+    echo_success "dotfiles installed."
 }
 
 function set_shell()
 {
-    sudo chsh -s /usr/bin/fish "$USER"
+    require fish
+    PATH_TO_FISH=$(type -p fish)
+    sudo chsh -s "$PATH_TO_FISH" "$USER"
 }
 
 function setup_password_store()
@@ -342,7 +346,7 @@ function install_desktop_apps()
         alacritty \
         thunar \
         spotify playerctl \
-        sxiv \
+        nsxiv \
         gcolor3 \
         zsa-keymapp-bin \
         telegram-desktop \
