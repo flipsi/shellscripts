@@ -143,7 +143,7 @@ function _create_backup()
     done
 
     rm -f "$LATEST"
-    ln -s "$DESTINATION" "$LATEST"
+    ln -s --relative "$DESTINATION" "$LATEST"
 }
 
 
