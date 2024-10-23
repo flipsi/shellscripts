@@ -4,10 +4,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# backup
-# A script to create incremental backups with hardlinks (for efficiency).
-#
 # Author: Philipp Moers <soziflip@gmail.com>
+#
+# backup
+# A script to create incremental backups with hardlinks using rsync.
+# This is efficient both in terms of backup runtime performance and disk space usage.
+# Note that backups won't be incremental on NTFS (doesn't support linux hardlinks)!
 #
 # The script is meant to be run on a regular basis without any arguments e.g. as a cron job.
 # It can be run manually in addition to that.
@@ -19,9 +21,6 @@ set -o pipefail
 #
 # In the default synced directory the file 'README.md' explains order and file structure.
 # The file 'tidy.txt' on external hard drives is outdated.
-#
-# The implementation basically wraps rsync.
-# Inspired by https://digitalis.io/blog/linux/incremental-backups-with-rsync-and-hard-links/
 
 
 #############################
@@ -52,33 +51,34 @@ DEFAULT_BACKUP_DIR="/mnt/wd-4tb/backup" # default value
 # If they do exist, but have not been synced, only the present content will be in the backup and
 # other newer/older backups may contain other data. This may be confusing, but not cause data loss.
 # So it still would be best to sync before running this backup script.
+# Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 SYNCED_SOURCES=(
-    "$HOME/Sync"
-    "$HOME/img-photo"
-    # "$HOME/img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
-    # "$HOME/img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
-    "$HOME/recording"
-    "$HOME/vid"
-    "$HOME/vid-misc"
-    "$HOME/vid-movie"
-    "$HOME/work/code-intelligence"
-    "$HOME/work/reply"
+    "$HOME/./Sync"
+    "$HOME/./img-photo"
+    # "$HOME/./img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
+    # "$HOME/./img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
+    "$HOME/./recording"
+    "$HOME/./vid"
+    "$HOME/./vid-misc"
+    "$HOME/./vid-movie"
+    "$HOME/./work/code-intelligence"
+    "$HOME/./work/reply"
 )
 
 # These are not expected to be synced, so backed up in per-host subdirectories.
 # Backups will be created in the `unsynced` directory under the hostname.
 # If they don't exist, they will just be skipped.
 UNSYNCED_SOURCES=(
-    "$HOME/.gnupg"
-    "$HOME/.local/share/mail"
-    "$HOME/.password-store"
-    "$HOME/.ssh"
-    "$HOME/opt"
-    "$HOME/os"
-    "$HOME/projects" # subdirs should be in a remove git repository, but hey
-    "$HOME/public-html"
-    "$HOME/work-projects/code-intelligence"
-    "$HOME/work-projects/reply"
+    "$HOME/./.gnupg"
+    "$HOME/./.local/share/mail"
+    "$HOME/./.password-store"
+    "$HOME/./.ssh"
+    "$HOME/./opt"
+    "$HOME/./os"
+    "$HOME/./projects" # subdirs should be in a remove git repository, but hey
+    "$HOME/./public-html"
+    "$HOME/./work-projects/code-intelligence"
+    "$HOME/./work-projects/reply"
 )
 
 # There may also be an "archive" directory with not-meant-to-change-anymore data.
@@ -92,8 +92,8 @@ UNSYNCED_SOURCES=(
 # CONFIGURATION ENDS HERE #
 ###########################
 
-DATE_HUMAN_READABLE="$(date +%Y-%m-%d-%H-%M)"
-DATE="$(date +%Y-%m-%d-%H-%M)"
+DATE_HUMAN_READABLE="$(date)"
+DATE="$(date +%Y-%m-%d-%H-%M-%S)"
 TIME=$(date +%s)
 
 LOG_DIR="$HOME/.backup.log"
@@ -101,7 +101,12 @@ LOG_FILE="$LOG_DIR/backup.$DATE.log"
 
 HOSTNAME=$(hostname)
 
-RSYNC_OPTS=("--verbose" "--archive" "--delete")
+RSYNC_OPTS=(
+    "--verbose"
+    "--relative"
+    "--archive"
+    "--delete"
+)
 RSYNC_OPTS+=("--exclude='.cache'")
 
 
@@ -117,7 +122,7 @@ EOF
 }
 
 
-function _create_backup()
+function _create_backup_increment()
 {
     things=("$@")
     # Make sure to set $BACKUP_LIST env, too! (can't accept additional args)
@@ -127,7 +132,9 @@ function _create_backup()
 
     LOCAL_RSYNC_OPTS=("${RSYNC_OPTS[@]}")
     if [ -d "$LATEST" ]; then
-        LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST")
+        # --link-dest arguments have to be relative to the destination dir
+        LATEST_RELATIVE="../$(readlink "$LATEST")"
+        LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST_RELATIVE")
     fi
 
     mkdir -p "$DESTINATION"
@@ -159,14 +166,14 @@ function _main()
     # SYNCED_SOURCES
     BACKUP_LIST="$BACKUP_DIR/synced"
     mkdir -p "$BACKUP_LIST"
-    _create_backup "${SYNCED_SOURCES[@]}"
+    _create_backup_increment "${SYNCED_SOURCES[@]}"
 
     # UNSYNCED_SOURCES
     BACKUP_LIST="$BACKUP_DIR/unsynced/$HOSTNAME"
     mkdir -p "$BACKUP_LIST"
-    _create_backup "${UNSYNCED_SOURCES[@]}"
+    _create_backup_increment "${UNSYNCED_SOURCES[@]}"
 
-    DATE_FINISHED="$(date +%Y-%m-%d-%H-%M)"
+    DATE_FINISHED="$(date)"
     TIME_FINISHED=$(date +%s)
     EXECUTION_TIME=$((TIME_FINISHED - TIME))
 
