@@ -7,17 +7,42 @@ set -o pipefail
 # Author: Philipp Moers <soziflip@gmail.com>
 #
 # backup
-# A script to create incremental backups with hardlinks using rsync.
-# This is efficient both in terms of backup runtime performance and disk space usage.
+# A script to create backups using rsync.
+#
+# For certain directories this script creates incremental backups with hardlinks (think snapshots
+# that refer to older snapshots). This is efficient both in terms of backup runtime performance and
+# disk space usage.
 # Note that backups won't be incremental on NTFS (doesn't support linux hardlinks)!
 #
-# The script is meant to be run on a regular basis without any arguments e.g. as a cron job.
+# Ideally, the script is run on a regular basis e.g. as a cron job.
 # It can be run manually in addition to that.
 #
-# The script is for one way backups.
+# The script is for one way backups, e.g. to external hard drives.
 # To sync directories across hosts, I use Syncthing.
-# The one-way incremental nature means that deletions will be reflected in future backups, but old
-# snapshots will retain the data, so nothing is lost.
+#
+# There are three kinds of groups of directories with different backup strategies:
+# "data", "synced" and "unsynced".
+#
+# 1) "synced" directories are meant for personal data like documents etc. that I want on every host.
+#    They are expected to be synced across hosts via a sync tool, not this backup script.
+#    Backups will be incremental, i.e. the target will contain subdirectories per timestamp.
+#    Since there is an external sync, there will be *no* subdirectories per host.
+#    It is recommended to perform a sync before running this backup script, so that the directories
+#    contain the most recent data. Otherwise only the present data will be in the snapshot and other
+#    newer/older snapshots may contain other data. This may be confusing (but not cause data loss).
+#    Deletions will be synced to the target (for the created snapshot).
+# 2) "unsynced" directories are meant for other per-host data that I want to backup.
+#    There will be one subdirectory per host.
+#    Backups will be incremental, i.e. the target will contain subdirectories per timestamp.
+#    Deletions will be synced to the target (for the created snapshot).
+# 3) "data" directories are meant for bigger data collections like personal photos, that I *don't*
+#    want on every host (for disk space reasons).
+#    Backups will *not* be incremental, i.e. the target will *not* contain subdirectories
+#    per timestamp.
+#    Also, there will be no subdirectories per host, as this should generate a central backup of
+#    data from different hosts - so hosts should use a common structure for this to work.
+#    Deletions will not be synced to the target. However data could be overwritten!
+#
 #
 # In the default synced directory the file 'README.md' explains order and file structure.
 # The file 'tidy.txt' on external hard drives is outdated.
@@ -34,6 +59,8 @@ set -o pipefail
 DEFAULT_BACKUP_DIR="/mnt/wd-4tb/backup" # default value
 
 # File structure that will be created in $BACKUP_DIR:
+# /data/foo
+# /data/bar
 # /synced/latest
 # /synced/$DATE/foo
 # /synced/$DATE/bar
@@ -45,29 +72,18 @@ DEFAULT_BACKUP_DIR="/mnt/wd-4tb/backup" # default value
 # Directories that should be backed up:
 # -------------------------------------
 
-# These are expected to be synced externally, so *not* backed up in per-host subdirectories.
 # Backups will be created in the `synced` directory.
 # If they don't exist, they will just be skipped.
-# If they do exist, but have not been synced, only the present content will be in the backup and
-# other newer/older backups may contain other data. This may be confusing, but not cause data loss.
-# So it still would be best to sync before running this backup script.
 # Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 SYNCED_SOURCES=(
     "$HOME/./Sync"
-    "$HOME/./img-photo"
-    # "$HOME/./img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
-    # "$HOME/./img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
-    "$HOME/./recording"
-    "$HOME/./vid"
-    "$HOME/./vid-misc"
-    "$HOME/./vid-movie"
     "$HOME/./work/code-intelligence"
     "$HOME/./work/reply"
 )
 
-# These are not expected to be synced, so backed up in per-host subdirectories.
 # Backups will be created in the `unsynced` directory under the hostname.
 # If they don't exist, they will just be skipped.
+# Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 UNSYNCED_SOURCES=(
     "$HOME/./.gnupg"
     "$HOME/./.local/share/mail"
@@ -81,12 +97,21 @@ UNSYNCED_SOURCES=(
     "$HOME/./work-projects/reply"
 )
 
-# There may also be an "archive" directory with not-meant-to-change-anymore data.
-# So we would not need incremental backups for that.
-# Also, the data does not have to live in directories per host, despite missing sync.
-# TODO: I may want to "back it up" with this script, i.e. make a redundant copy of something that I
-# want to archive. (Would have to be done without rsync's `--delete` flag!)
-# TODO: Also find a mechanism to "sync" archives across multiple hard drives? Seems ironic.
+# Backups will be added to the `data` backup directory.
+# If they don't exist, they will just be skipped.
+# Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
+DATA_SOURCES=(
+    "$HOME/./img-photo"
+    # "$HOME/./img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
+    # "$HOME/./img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
+    "$HOME/./music-misc"
+    "$HOME/./music-soundtracks"
+    "$HOME/./music-vid"
+    "$HOME/./recording"
+    "$HOME/./vid"
+    "$HOME/./vid-misc"
+    "$HOME/./vid-movie"
+)
 
 ###########################
 # CONFIGURATION ENDS HERE #
@@ -101,24 +126,49 @@ LOG_FILE="$LOG_DIR/backup.$DATE.log"
 
 HOSTNAME=$(hostname)
 
+# RSYNC_OPTS must never contain "--delete", only RSYNC_OPTS_INCREMENTAL should!
 RSYNC_OPTS=(
     "--verbose"
-    "--relative"
     "--archive"
+    "--relative"
+    "--exclude='.cache'"
+)
+RSYNC_OPTS_INCREMENTAL=("${RSYNC_OPTS[@]}")
+RSYNC_OPTS_INCREMENTAL+=(
     "--delete"
 )
-RSYNC_OPTS+=("--exclude='.cache'")
 
 
 function _print_help_msg()
 {
     cat <<-EOF
-Create incremental backup of some configured files in $HOME.
+Create backup of some configured files in $HOME.
 
 Usage: $(basename "$0") [--backup-dir /path/to/backup/dir]
 
 If no backup directory is given, $DEFAULT_BACKUP_DIR is used as a default.
 EOF
+}
+
+
+function _backup_data()
+{
+    things=("$@")
+    # Make sure to set $BACKUP_DATA_DIR env, too! (can't accept additional args)
+
+    DESTINATION="$BACKUP_DATA_DIR"
+
+    mkdir -p "$DESTINATION"
+
+    for thing in "${things[@]}"; do
+        echo -e "\nBacking up $thing ..."
+        if ! test -e "$thing"; then
+            echo "WARNING: $thing not found! Skipping."
+        else
+            echo "rsync ${RSYNC_OPTS[*]} $thing $DESTINATION"
+            env rsync "${RSYNC_OPTS[@]}" "$thing" "$DESTINATION"
+        fi
+    done
 }
 
 
@@ -130,7 +180,7 @@ function _create_backup_increment()
     DESTINATION="$BACKUP_LIST/$DATE"
     LATEST="$BACKUP_LIST/latest"
 
-    LOCAL_RSYNC_OPTS=("${RSYNC_OPTS[@]}")
+    LOCAL_RSYNC_OPTS=("${RSYNC_OPTS_INCREMENTAL[@]}")
     if [ -d "$LATEST" ]; then
         # --link-dest arguments have to be relative to the destination dir
         LATEST_RELATIVE="../$(readlink "$LATEST")"
@@ -173,11 +223,14 @@ function _main()
     mkdir -p "$BACKUP_LIST"
     _create_backup_increment "${UNSYNCED_SOURCES[@]}"
 
+    # DATA_SOURCES
+    BACKUP_DATA_DIR="$BACKUP_DIR/data"
+    mkdir -p "$BACKUP_DATA_DIR"
+    _backup_data "${DATA_SOURCES[@]}"
+
     DATE_FINISHED="$(date)"
     TIME_FINISHED=$(date +%s)
     EXECUTION_TIME=$((TIME_FINISHED - TIME))
-
-    # TODO: backup archive to archive dir (without `--delete` flag)
 
     echo # newline
     echo "Finished backup at $DATE_FINISHED within $EXECUTION_TIME seconds."
