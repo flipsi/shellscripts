@@ -30,7 +30,8 @@ set -o pipefail
 #    It is recommended to perform a sync before running this backup script, so that the directories
 #    contain the most recent data. Otherwise only the present data will be in the snapshot and other
 #    newer/older snapshots may contain other data. This may be confusing (but not cause data loss).
-#    Deletions will be synced to the target (for the created snapshot).
+#    The data doesn't really need to be on every host, however
+#    deletions will be synced to the target (for the created snapshot).
 # 2) "unsynced" directories are meant for other per-host data that I want to backup.
 #    There will be one subdirectory per host.
 #    Backups will be incremental, i.e. the target will contain subdirectories per timestamp.
@@ -56,17 +57,17 @@ set -o pipefail
 # -----------------------------------------
 
 # $BACKUP_DIR can be set via command line argument (--backup-dir)
-DEFAULT_BACKUP_DIR="/mnt/wd-4tb/backup" # default value
+DEFAULT_BACKUP_DIR="/mnt/verliernix-zfs-flipsi" # default value
 
 # File structure that will be created in $BACKUP_DIR:
 # /data/foo
 # /data/bar
-# /synced/latest
-# /synced/$DATE/foo
-# /synced/$DATE/bar
-# /unsynced/$HOSTNAME/latest
-# /unsynced/$HOSTNAME/$DATE/baz
-# /unsynced/$HOSTNAME/$DATE/quz
+# /backup/synced/latest
+# /backup/synced/$DATE/foo
+# /backup/synced/$DATE/bar
+# /backup/unsynced/$HOSTNAME/latest
+# /backup/unsynced/$HOSTNAME/$DATE/baz
+# /backup/unsynced/$HOSTNAME/$DATE/quz
 
 
 # Directories that should be backed up:
@@ -214,19 +215,19 @@ function _create_backup_increment()
 function _main()
 {
     echo "Started backup at $DATE_HUMAN_READABLE"
-    # if ! mountpoint -q "$BACKUP_DIR"; then    # test if mounted ($BACKUP_DIR as mountpoint)
-    if ! test -d "$BACKUP_DIR"; then    # ($BACKUP_DIR as subdir of mountpoint)
+    # if ! test -d "$BACKUP_DIR"; then    # ($BACKUP_DIR as subdir of mountpoint)
+    if ! mountpoint -q "$BACKUP_DIR"; then    # test if mounted ($BACKUP_DIR as mountpoint)
         echo "FATAL ERROR: Backup directory $BACKUP_DIR not found!"
         exit 1
     fi
 
     # SYNCED_SOURCES
-    BACKUP_LIST="$BACKUP_DIR/synced"
+    BACKUP_LIST="$BACKUP_DIR/backup/synced"
     mkdir -p "$BACKUP_LIST"
     _create_backup_increment "${SYNCED_SOURCES[@]}"
 
     # UNSYNCED_SOURCES
-    BACKUP_LIST="$BACKUP_DIR/unsynced/$HOSTNAME"
+    BACKUP_LIST="$BACKUP_DIR/backup/unsynced/$HOSTNAME"
     mkdir -p "$BACKUP_LIST"
     _create_backup_increment "${UNSYNCED_SOURCES[@]}"
 
