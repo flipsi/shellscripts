@@ -47,7 +47,7 @@ function send_server_to_sleep {
     # Requires poweroff command to be executable without password. You may have to add the following
     # line to /etc/sudoers via `sudo visudo`:
     # %sudo ALL=(ALL:ALL) NOPASSWD: /usr/bin/poweroff
-    # ssh "$server_name" 'sudo poweroff'
+    ssh "$server_name" 'sudo poweroff'
 }
 
 function mount_server {
