@@ -164,20 +164,6 @@ EOF
 }
 
 
-# function mkdir_potentially_remote()
-# {
-#     DIR="$1"
-#     if [[ "${DIR}" == *:* ]] ; then
-#         HOST=$(echo "$DEST" | cut -d ":" -f 1)
-#         DIR=$(echo "$DEST" | cut -d ":" -f 2)
-#         # shellcheck disable=SC2029
-#         ssh "$HOST" "mkdir -p $DIR"
-#     else
-#         mkdir -p "$DIR"
-#     fi
-# }
-
-
 function _backup_data()
 {
     things=("$@")
