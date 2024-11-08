@@ -136,6 +136,7 @@ HOSTNAME=$(hostname)
 RSYNC_OPTS=(
     "--verbose"
     "--archive"
+    "--one-file-system"
     "--relative"
     "--exclude='.cache'"
 )
