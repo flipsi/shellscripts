@@ -85,10 +85,17 @@ SYNCED_SOURCES=(
 # If they don't exist, they will just be skipped.
 # Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 UNSYNCED_SOURCES=(
+    "$HOME/./.azure"
+    "$HOME/./.babashka"
+    "$HOME/./.config"
+    "$HOME/./.cargo"
+    "$HOME/./.clojure"
     "$HOME/./.gnupg"
+    "$HOME/./.netrc"
     "$HOME/./.local/share/mail"
     "$HOME/./.password-store"
     "$HOME/./.ssh"
+    "$HOME/./bin"
     "$HOME/./opt"
     "$HOME/./os"
     "$HOME/./projects" # subdirs should be in a remove git repository, but hey
@@ -102,12 +109,11 @@ UNSYNCED_SOURCES=(
 # Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 DATA_SOURCES=(
     "$HOME/./img-photo"
-    # "$HOME/./img-screenshots" # TODO: move out of `Sync` if I don't want it on every host?
-    # "$HOME/./img-wallpaper" # TODO: move out of `Sync` if I don't want it on every host?
     "$HOME/./music-misc"
     "$HOME/./music-soundtracks"
     "$HOME/./music-vid"
     "$HOME/./recording"
+    "$HOME/./snd-audiobooks"
     "$HOME/./vid"
     "$HOME/./vid-misc"
     "$HOME/./vid-movie"
