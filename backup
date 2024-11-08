@@ -57,7 +57,6 @@ set -o pipefail
 # -----------------------------------------
 
 # This can be a local diretory path or a remote one that rsync supports (like ssh - `host:/path`)
-# TODO reuse ssh connection (https://unix.stackexchange.com/questions/218272/how-can-i-maintain-open-ssh-connection-and-use-it-from-shell-scripts)
 
 # $DEST can be set via command line argument (--dest)
 DEFAULT_DEST="verliernix:/mnt/zfs/flipsi" # default value
@@ -252,6 +251,7 @@ function _check_destination()
         echo "Testing connection to remote host $DEST_HOST ..."
         if ssh "$DEST_HOST" exit; then
             echo "Connection successful."
+            echo "It is recommended to reuse SSH connections (ControlMaster, ControlPersist etc.) as the scripts connects to the destination multiple times."
         else
             echo "FATAL ERROR: Could not establish connection to $DEST_HOST"
             echo "Make sure SSH access (or similar) works (ideally without password prompt)."
