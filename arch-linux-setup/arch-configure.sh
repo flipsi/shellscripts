@@ -143,6 +143,7 @@ function install_tools()
         mediainfo \
         mlocate \
         ncdu \
+        net-tools \
         odt2txt \
         pydf \
         ripgrep \
@@ -157,6 +158,7 @@ function install_tools()
         tmux \
         translate-shell \
         trash-cli \
+        usbutils \
         vlc
 }
 
