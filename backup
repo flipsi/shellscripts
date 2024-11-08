@@ -56,10 +56,13 @@ set -o pipefail
 # Directory in which to create the backups:
 # -----------------------------------------
 
-# $BACKUP_DIR can be set via command line argument (--backup-dir)
-DEFAULT_BACKUP_DIR="/mnt/verliernix-zfs-flipsi" # default value
+# This can be a local diretory path or a remote one that rsync supports (like ssh - `host:/path`)
+# TODO reuse ssh connection (https://unix.stackexchange.com/questions/218272/how-can-i-maintain-open-ssh-connection-and-use-it-from-shell-scripts)
 
-# File structure that will be created in $BACKUP_DIR:
+# $DEST can be set via command line argument (--dest)
+DEFAULT_DEST="verliernix:/mnt/zfs/flipsi" # default value
+
+# File structure that will be created in $DEST:
 # /data/foo
 # /data/bar
 # /backup/synced/latest
@@ -88,6 +91,7 @@ SYNCED_SOURCES=(
 UNSYNCED_SOURCES=(
     "$HOME/./.azure"
     "$HOME/./.babashka"
+    "$HOME/./.backup.log"
     "$HOME/./.config"
     "$HOME/./.cargo"
     "$HOME/./.clojure"
@@ -137,6 +141,7 @@ HOSTNAME=$(hostname)
 RSYNC_OPTS=(
     "--verbose"
     "--archive"
+    "--mkpath"
     "--one-file-system"
     "--relative"
     "--exclude='.cache'"
@@ -152,11 +157,25 @@ function _print_help_msg()
     cat <<-EOF
 Create backup of some configured files in $HOME.
 
-Usage: $(basename "$0") [--backup-dir /path/to/backup/dir]
+Usage: $(basename "$0") [--dest DEST]
 
-If no backup directory is given, $DEFAULT_BACKUP_DIR is used as a default.
+If no backup destination is given, $DEFAULT_DEST is used as a default.
 EOF
 }
+
+
+# function mkdir_potentially_remote()
+# {
+#     DIR="$1"
+#     if [[ "${DIR}" == *:* ]] ; then
+#         HOST=$(echo "$DEST" | cut -d ":" -f 1)
+#         DIR=$(echo "$DEST" | cut -d ":" -f 2)
+#         # shellcheck disable=SC2029
+#         ssh "$HOST" "mkdir -p $DIR"
+#     else
+#         mkdir -p "$DIR"
+#     fi
+# }
 
 
 function _backup_data()
@@ -164,17 +183,15 @@ function _backup_data()
     things=("$@")
     # Make sure to set $BACKUP_DATA_DIR env, too! (can't accept additional args)
 
-    DESTINATION="$BACKUP_DATA_DIR"
-
-    mkdir -p "$DESTINATION"
+    RSYNC_DEST="$BACKUP_DATA_DIR"
 
     for thing in "${things[@]}"; do
         echo -e "\nBacking up $thing ..."
         if ! test -e "$thing"; then
             echo "WARNING: $thing not found! Skipping."
         else
-            echo "rsync ${RSYNC_OPTS[*]} $thing $DESTINATION"
-            env rsync "${RSYNC_OPTS[@]}" "$thing" "$DESTINATION"
+            echo "rsync ${RSYNC_OPTS[*]} $thing $RSYNC_DEST"
+            env rsync "${RSYNC_OPTS[@]}" "$thing" "$RSYNC_DEST"
         fi
     done
 }
@@ -185,55 +202,101 @@ function _create_backup_increment()
     things=("$@")
     # Make sure to set $BACKUP_LIST env, too! (can't accept additional args)
 
-    DESTINATION="$BACKUP_LIST/$DATE"
+    RSYNC_DEST="$BACKUP_LIST/$DATE"
     LATEST="$BACKUP_LIST/latest"
 
-    LOCAL_RSYNC_OPTS=("${RSYNC_OPTS_INCREMENTAL[@]}")
-    if [ -d "$LATEST" ]; then
-        # --link-dest arguments have to be relative to the destination dir
-        LATEST_RELATIVE="../$(readlink "$LATEST")"
-        LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST_RELATIVE")
+    # 1. Determine 'latest' backup to link to
+
+    LOCAL_RSYNC_OPTS=("${RSYNC_OPTS_INCREMENTAL[@]}") # copy to not overwrite RSYNC_OPTS_INCREMENTAL
+    if [[ "$IS_REMOTE_DEST" == 'TRUE' ]]; then
+        if ssh "$DEST_HOST" test -d "$LATEST"; then
+            # shellcheck disable=SC2029
+            LATEST_RELATIVE="../$(ssh "$DEST_HOST" "readlink '$LATEST'")"
+            LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST_RELATIVE")
+            # --link-dest arguments have to be relative to the destination dir
+        fi
+    else
+        if [ -d "$LATEST" ]; then
+            LATEST_RELATIVE="../$(readlink "$LATEST")"
+            LOCAL_RSYNC_OPTS+=("--link-dest=$LATEST_RELATIVE")
+            # --link-dest arguments have to be relative to the destination dir
+        fi
     fi
 
-    mkdir -p "$DESTINATION"
+    # 2. Run rsync
 
     for thing in "${things[@]}"; do
         echo -e "\nBacking up $thing ..."
         if ! test -e "$thing"; then
             echo "WARNING: $thing not found! Skipping."
         else
-            echo "rsync ${LOCAL_RSYNC_OPTS[*]} $thing $DESTINATION"
-            env rsync "${LOCAL_RSYNC_OPTS[@]}" "$thing" "$DESTINATION"
+            if [[ "$IS_REMOTE_DEST" == 'TRUE' ]]; then
+                echo "rsync ${LOCAL_RSYNC_OPTS[*]} $thing $DEST_HOST:$RSYNC_DEST"
+                env rsync "${LOCAL_RSYNC_OPTS[@]}" "$thing" "$DEST_HOST:$RSYNC_DEST"
+            else
+                echo "rsync ${LOCAL_RSYNC_OPTS[*]} $thing $RSYNC_DEST"
+                env rsync "${LOCAL_RSYNC_OPTS[@]}" "$thing" "$RSYNC_DEST"
+            fi
         fi
     done
 
-    rm -f "$LATEST"
-    ln -s --relative "$DESTINATION" "$LATEST"
+    # 3. Set 'latest' link
+
+    if [[ "$IS_REMOTE_DEST" == 'TRUE' ]]; then
+        # shellcheck disable=SC2029
+        ssh "$DEST_HOST" "rm -f '$LATEST' && ln -s --relative '$RSYNC_DEST' '$LATEST'"
+    else
+        rm -f "$LATEST"
+        ln -s --relative "$RSYNC_DEST" "$LATEST"
+    fi
+}
+
+
+function _check_destination()
+{
+    if [[ "${DEST}" == *:* ]] ; then # remote destination
+        IS_REMOTE_DEST='TRUE'
+        DEST_HOST=$(echo "$DEST" | cut -d ":" -f 1)
+        DEST_DIR=$(echo "$DEST" | cut -d ":" -f 2)
+    else
+        DEST_DIR="$DEST"
+    fi
+
+    if [[ "$IS_REMOTE_DEST" == 'TRUE' ]]; then
+        echo "Testing connection to remote host $DEST_HOST ..."
+        if ssh "$DEST_HOST" exit; then
+            echo "Connection successful."
+        else
+            echo "FATAL ERROR: Could not establish connection to $DEST_HOST"
+            echo "Make sure SSH access (or similar) works (ideally without password prompt)."
+            exit 1
+        fi
+    else
+        # if ! mountpoint -q "$DEST"; then    # test if mounted ($DEST as mountpoint)
+        if ! test -d "$DEST"; then    # ($DEST as subdir of mountpoint)
+            echo "FATAL ERROR: Backup destination directory $DEST not found!"
+            exit 1
+        fi
+    fi
 }
 
 
 function _main()
 {
     echo "Started backup at $DATE_HUMAN_READABLE"
-    # if ! test -d "$BACKUP_DIR"; then    # ($BACKUP_DIR as subdir of mountpoint)
-    if ! mountpoint -q "$BACKUP_DIR"; then    # test if mounted ($BACKUP_DIR as mountpoint)
-        echo "FATAL ERROR: Backup directory $BACKUP_DIR not found!"
-        exit 1
-    fi
+
+    _check_destination
 
     # SYNCED_SOURCES
-    BACKUP_LIST="$BACKUP_DIR/backup/synced"
-    mkdir -p "$BACKUP_LIST"
+    BACKUP_LIST="$DEST_DIR/backup/synced"
     _create_backup_increment "${SYNCED_SOURCES[@]}"
 
     # UNSYNCED_SOURCES
-    BACKUP_LIST="$BACKUP_DIR/backup/unsynced/$HOSTNAME"
-    mkdir -p "$BACKUP_LIST"
+    BACKUP_LIST="$DEST_DIR/backup/unsynced/$HOSTNAME"
     _create_backup_increment "${UNSYNCED_SOURCES[@]}"
 
     # DATA_SOURCES
-    BACKUP_DATA_DIR="$BACKUP_DIR/data"
-    mkdir -p "$BACKUP_DATA_DIR"
+    BACKUP_DATA_DIR="$DEST/data"
     _backup_data "${DATA_SOURCES[@]}"
 
     DATE_FINISHED="$(date)"
@@ -249,11 +312,13 @@ function _main()
 if [[ "${1-default}" = "--help" ]]; then
     _print_help_msg
     exit
-elif [[ "${1-default}" = "--backup-dir" ]]; then
-    BACKUP_DIR="${2-$DEFAULT_BACKUP_DIR}"
+elif [[ "${1-default}" = "--dest" ]]; then
+    DEST="${2-$DEFAULT_DEST}"
 else
-    BACKUP_DIR="$DEFAULT_BACKUP_DIR"
+    DEST="$DEFAULT_DEST"
 fi
+
+DEST="${DEST%/}" # remove trailing slash if present
 
 mkdir -p "$LOG_DIR"
 touch "$LOG_FILE"

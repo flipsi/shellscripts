@@ -60,10 +60,6 @@ function unmount_server {
     umount "$mountpoint"
 }
 
-function execute_backup {
-    # `backup` is a script expected to be in $PATH
-    /usr/bin/env backup "$mountpoint"
-}
 
 function main {
 
@@ -78,22 +74,14 @@ function main {
         echo "$server_name is online."
     fi
 
-    # shellcheck disable=SC2155 # (we need 'local' to not abort the script if subshell fails)
-    local was_server_mounted=$(mountpoint -q "$mountpoint" && echo 'TRUE')
-    if ! [[ $was_server_mounted = 'TRUE' ]]; then
-        echo "Mounting $server_name on $mountpoint ..."
-        mount_server
-    else
-        echo "$server_name seems to already be mounted on $mountpoint."
-    fi
+    # I don't want to mount via SSHFS and use local rsync, but prefer rsync over ssh instead
+    # (see https://unix.stackexchange.com/a/284061/119362).
 
     echo -e "Executing backup script now.\n"
-    execute_backup
+    # `backup` is a script expected to be in $PATH
+    /usr/bin/env backup
 
-    if ! [[ $was_server_mounted = 'TRUE' ]]; then
-        echo "Unmounting $server_name ..."
-        unmount_server
-    fi
+    echo # newline
 
     if ! [[ $was_server_awake = 'TRUE' ]]; then
         echo "Sending $server_name back to sleep now."
