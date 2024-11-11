@@ -102,8 +102,9 @@ UNSYNCED_SOURCES=(
     "$HOME/./bin"
     "$HOME/./opt"
     "$HOME/./os"
-    "$HOME/./projects" # subdirs should be in a remove git repository, but hey
     "$HOME/./public-html"
+    "$HOME/./src"
+    "$HOME/./src-projects" # should be in remote repositories, but additional backup can't hurt
     "$HOME/./work-projects/code-intelligence"
     "$HOME/./work-projects/reply"
 )
@@ -112,13 +113,14 @@ UNSYNCED_SOURCES=(
 # If they don't exist, they will just be skipped.
 # Note the "/./" to limit relative paths, see https://unix.stackexchange.com/a/321224/119362
 DATA_SOURCES=(
-    "$HOME/./img-photo"
+    "$HOME/./img-personal"
     "$HOME/./music-misc"
     "$HOME/./music-soundtracks"
     "$HOME/./music-vid"
     "$HOME/./recording"
     "$HOME/./snd-audiobooks"
     "$HOME/./vid"
+    "$HOME/./vid-personal"
     "$HOME/./vid-misc"
     "$HOME/./vid-movie"
 )
@@ -144,6 +146,7 @@ RSYNC_OPTS=(
     "--one-file-system"
     "--relative"
     "--exclude='.cache'"
+    "--exclude='.stfolder'"
 )
 RSYNC_OPTS_INCREMENTAL=("${RSYNC_OPTS[@]}")
 RSYNC_OPTS_INCREMENTAL+=(
