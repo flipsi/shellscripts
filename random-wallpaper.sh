@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Author: "Philipp Moers" <soziflip@gmail.com>
+set -e
 
+# Author: "Philipp Moers" <soziflip@gmail.com>
 
 function print_help_msg() {
     cat <<-EOF
@@ -20,8 +21,17 @@ EOF
 
 # TODO: --only option to only set for current output
 
+DEFAULT_WALLPAPER_DIR="$HOME/img-wallpaper/interfacelift"
+i3_WALLPAPER="$HOME/.i3/wallpaper.png" # must end with '.png'
 
-set -e
+function require {
+  hash "$1" 2>/dev/null || {
+    echo >&2 "Error: '$1' is required, but was not found."; exit 1;
+  }
+}
+
+require feh
+require magick
 
 for i in "$@"
 do
@@ -51,8 +61,8 @@ done
 
 
 if [[ -z $WALLPAPER_DIR ]]; then
-    if [[ -d $HOME/img-wallpaper ]]; then
-        WALLPAPER_DIR=$HOME/img-wallpaper
+    if [[ -d "$DEFAULT_WALLPAPER_DIR" ]]; then
+        WALLPAPER_DIR="$DEFAULT_WALLPAPER_DIR"
     else
         WALLPAPER_DIR=$HOME
     fi
@@ -70,27 +80,26 @@ function chooseWallpaper() {
         N=1
     fi
     wallpaper=$(\
-        # find $WALLPAPER_DIR -name '*' -exec file {} \; | grep -o -P '^.+: \w+ image' \
-        find $WALLPAPER_DIR -regex '.*\.\(png\|jpg\|jpeg\)' \
+        find -L "$WALLPAPER_DIR" -regex '.*\.\(png\|jpg\|jpeg\)' \
             | sed 's/:.*$//' \
-            | sort -R | head -n${N} \
+            | sort -R | head -n"${N}" \
             | sed 's/$/ /g' | tr -d '\n' )
+    wallpaper=$(echo "$wallpaper" | cut -d' ' -f1)
 }
 
 
 function setWallpaper() {
-    # feh --bg-scale $wallpaper
-    feh --bg-fill $wallpaper
+    # feh --bg-scale "$wallpaper"
+    feh --bg-fill "$wallpaper"
 }
 
 
 function setWallpaperSymlinkI3() {
-    local wallpaper=$(echo $wallpaper | cut -d' ' -f1)
     # i3lock needs png
     if file "$wallpaper" | grep 'PNG image data' >/dev/null; then
-        ln -s -f "$wallpaper" $HOME/.i3/wallpaper.png
+        ln -s -f "$wallpaper" "$i3_WALLPAPER"
     else
-        convert "$wallpaper" -resize 2560x1440 $HOME/.i3/wallpaper.png
+        magick "$wallpaper" -resize 2560x1440 "$i3_WALLPAPER"
     fi
 }
 
@@ -109,11 +118,11 @@ else
     restoreWallpaper
 fi
 
-echo $wallpaper
-echo $wallpaper > "${file_cur}"
+echo "$wallpaper"
+echo "$wallpaper" > "${file_cur}"
 
 setWallpaper
-if [[ $(whoami) = 'sflip' ]]; then
-    wallpaper=$(echo $wallpaper | cut -f1 -d' ')
+
+if [[ -e "$i3_WALLPAPER" ]]; then
     setWallpaperSymlinkI3
 fi
