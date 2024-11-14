@@ -170,6 +170,7 @@ function setup_fonts()
         ttf-dejavu \
         ttf-fira-mono \
         ttf-fira-sans \
+        ttf-font-awesome \
         ttf-inconsolata \
         ttf-meslo-nerd \
         ttf-roboto \
