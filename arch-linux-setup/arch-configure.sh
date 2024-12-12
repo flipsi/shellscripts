@@ -125,6 +125,7 @@ EOF
 function install_tools()
 {
     install_packages \
+        atool \
         bpytop \
         elinks \
         fd \
@@ -137,7 +138,6 @@ function install_tools()
         highlight \
         htop \
         inetutils \
-        joshuto \
         lsof \
         lynx \
         mediainfo \
@@ -158,6 +158,7 @@ function install_tools()
         tmux \
         translate-shell \
         trash-cli \
+        unzip \
         usbutils \
         vlc
 }
@@ -251,7 +252,7 @@ function setup_password_store()
         mkdir "$HOME/.password-store"
         pass git init
         pass git remote add github git@github.com:flipsi/password-store.git
-        # git branch --set-upstream-to=github/main main
+        git branch --set-upstream-to=github/main main
         pass git pull
         echo_success "password store pulled."
     fi
@@ -290,6 +291,7 @@ function install_i3_desktop()
     echo_warning "Make sure to install drivers for hardware acceleration!"
 
     install_packages \
+        arandr \
         i3-wm i3lock polybar dmenu rofi rofi-pass \
         pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-utils pamixer \
         python dbus-python \
@@ -298,14 +300,6 @@ function install_i3_desktop()
         redshift \
         xsel xclip clipmenu \
         cups cups-pdf
-
-    mkdir -p "$HOME/img"
-    mkdir -p "$HOME/img-screenshots"
-    mkdir -p "$HOME/img-wallpaper"
-    mkdir -p "$HOME/misc"
-    mkdir -p "$HOME/src"
-    mkdir -p "$HOME/tmp"
-    mkdir -p "$HOME/work"
 }
 
 function setup_printer()
@@ -366,20 +360,20 @@ function install_misc()
 }
 
 
-install_tools
-install_yay
-configure_pacman
-configure_pam_faillock
-configure_keyboard_layout
-setup_ssh
+#install_tools
+#install_yay
+#configure_pacman
+#configure_pam_faillock
+#configure_keyboard_layout
+#setup_ssh
 setup_fonts
-clone_and_install_dotfiles
+#clone_and_install_dotfiles
 # # setup_password_store
-setup_power_management
-install_i3_desktop
+#setup_power_management
+#install_i3_desktop
 # # setup_printer
-install_bluetooth
-setup_vim_and_neovim
-install_desktop_apps
-install_misc
+#install_bluetooth
+#setup_vim_and_neovim
+#install_desktop_apps
+#install_misc
 

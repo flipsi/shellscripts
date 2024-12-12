@@ -32,11 +32,11 @@ cryptsetup luksFormat /dev/nvme0n1p3
 cryptsetup open /dev/nvme0n1p3 $luksVolume
 
 # LVM setup
-pvcreate /dev/mapper/$luksGroup
-vgcreate $luksGroup /dev/mapper/$luksVolume
-lvcreate -L 8GB $luksGroup -n swap
+pvcreate /dev/luks/$luksGroup # wrong?
+vgcreate $luksGroup /dev/luks/$luksVolume # wrong?
+lvcreate -L 32GB $luksGroup -n swap
 lvcreate -L 200GB $luksGroup -n arch-root
-lvcreate -L 80GB $luksGroup -n ubuntu-root
+lvcreate -L 100GB $luksGroup -n ubuntu-root
 lvcreate -l 100%FREE $luksGroup -n home
 # If a logical volume will be formatted with ext4, leave at least 256 MiB free space in the volume group to allow using e2scrub(8). After creating the last volume with -l 100%FREE, this can be accomplished by reducing its size with
 lvreduce -L -256M $luksGroup/home.
@@ -71,7 +71,8 @@ genfstab -L /mnt >> /mnt/etc/fstab
 ############################
 
 # install basic packages
-pacstrap -K /mnt base linux linux-firmware \
+# pacstrap -K /mnt base linux linux-firmware \
+pacstrap -K /mnt base linux-lts linux-firmware \
 	base-devel git \
 	lvm2 \
 	netctl dhcpcd wpa_supplicant dialog \
@@ -80,13 +81,8 @@ pacstrap -K /mnt base linux linux-firmware \
 # Use the new system!
 arch-chroot /mnt
 
-# install yay
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si
-
-# install more!
-pacman -S git openssh ssh-tools inetutils sudo tmux
+# install more
+pacman -S sudo openssh ssh-tools inetutils
 
 
 #######################
@@ -180,7 +176,8 @@ visudo
 # install and configure boot loader #
 #####################################
 
-# using the good old grub, because cooler alternative like refind still don't support disc encryption
+########################################
+# ALTERNATIVE 1) using the good old grub
 
 pacman -S grub efibootmgr dosfstools mtools os-prober
 
@@ -190,9 +187,16 @@ nvim /etc/default/grub
 
 # install grub to EFI partition
 grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-
 cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
-grub-mkconfig -o /boot/grub/grub.cfg
+grub-mkconfig -o /boot/grub/grub.cfg # on ubuntu this is wrapped in a script `update-grub`
+
+
+########################################
+# ALTERNATIVE 2) using the modern refind
+#
+
+pacman -S refind
+refind-install
 
 
 ####################
