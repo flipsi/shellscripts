@@ -138,6 +138,7 @@ function install_tools()
         highlight \
         htop \
         inetutils \
+        jq \
         lsof \
         lynx \
         mediainfo \
@@ -160,7 +161,8 @@ function install_tools()
         trash-cli \
         unzip \
         usbutils \
-        vlc
+        vlc \
+        zip
 }
 
 function setup_fonts()
@@ -300,6 +302,14 @@ function install_i3_desktop()
         redshift \
         xsel xclip clipmenu \
         cups cups-pdf
+
+    sudo usermod -a -G audio "$USER"
+}
+
+function install_docker()
+{
+    install_packages docker docker-compose
+    sudo usermod -a -G docker "$USER"
 }
 
 function setup_printer()
@@ -332,8 +342,7 @@ function install_bluetooth()
 {
     install_packages \
         bluez bluez-utils blueman
-    sudo systemctl start bluetooth.service
-    sudo systemctl enable bluetooth.service
+    sudo systemctl enable --now bluetooth.service
 }
 
 
@@ -371,6 +380,7 @@ setup_fonts
 # # setup_password_store
 #setup_power_management
 #install_i3_desktop
+#install_docker
 # # setup_printer
 #install_bluetooth
 #setup_vim_and_neovim
