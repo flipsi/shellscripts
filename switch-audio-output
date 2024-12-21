@@ -1,11 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
-
-# Author: flipsi
-
-# Originally inspired from Author: tsvetan
-# http://ubuntuforums.org/archive/index.php/t-1370383.html
 
 # shellcheck disable=SC2155
 
@@ -20,10 +15,11 @@ Usage: $(basename "$0") [OPTIONS]
 
   --help                        Print this help message.
   -a APP  | --app APP           Application name to switch sink for. If omitted, change every app.
-  -s NAME | --sink SINK_INDEX   Send every input to this output device.
-  -t | --toggle                 Send every input to "the other" device. Configured via TOGGLE_SINK_OPTION_1 and TOGGLE_SINK_OPTION_2.
+  -s NAME | --sink SINK_INDEX   Use this output device.
+  -t      | --toggle            Use "the other" device. Configured via TOGGLE_SINK_OPTION_1 and TOGGLE_SINK_OPTION_2.
+  -A      | --auto              Use preferred device if available. Configured via TOGGLE_SINK_OPTION_1 and TOGGLE_SINK_OPTION_2.
 
-  If none of -s or -t is given, cycle through sinks.
+  If neither -s nor -t or -A is given, cycle through all available sinks.
 
 EOF
 }
@@ -73,6 +69,14 @@ function parse_arguments() {
         ;;
       --toggle)
         TOGGLE=true
+        shift
+        ;;
+      -A)
+        AUTO=true
+        shift
+        ;;
+      --auto)
+        AUTO=true
         shift
         ;;
       *)
@@ -203,6 +207,19 @@ function cycle_sinks() {
     notify-send -i notification-audio-volume-high "Sound output switched to" "$sink_description"
 }
 
+function get_best_sink() {
+    current_sink=$(get_default_sink)
+    toggle_sink_option_1_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
+    toggle_sink_option_2_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
+    if [[ -n "$toggle_sink_option_1_index" ]]; then
+        echo "$toggle_sink_option_1_index"
+    elif [[ -n "$toggle_sink_option_2_index" ]]; then
+        echo "$toggle_sink_option_2_index"
+    else
+        echo "$current_sink"
+    fi
+}
+
 function get_other_sink() {
     local app_index="$1"
     if [[ -n "$app_index" ]]; then
@@ -215,7 +232,6 @@ function get_other_sink() {
         exit 1
     fi
     toggle_sink_option_1_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_1")
-    toggle_sink_option_2_index=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
     if [[ "$current_sink" = "$toggle_sink_option_1_index" ]]; then
         other_sink=$(get_sink_index_from_name "$TOGGLE_SINK_OPTION_2")
     else
@@ -231,19 +247,27 @@ function get_other_sink() {
 function toggle_sinks_for_app() {
     local app="$1"
     app_index=$(get_app_index_from_name "$app")
-    other_sink=$(get_other_sink "$app_index")
-    move_sink_input "$app_index" "$other_sink"
+    new_sink=$(get_other_sink "$app_index")
+    move_sink_input "$app_index" "$new_sink"
 }
 
 function toggle_sinks_for_all_apps() {
-    other_sink=$(get_other_sink)
-    set_default_sink "$other_sink"
-    move_all_inputs_to_sink "$other_sink"
+    new_sink=$(get_other_sink "")
+    set_default_sink "$new_sink"
+    move_all_inputs_to_sink "$new_sink"
+}
+
+function set_best_sink_for_all_apps() {
+    new_sink=$(get_best_sink)
+    set_default_sink "$new_sink"
+    move_all_inputs_to_sink "$new_sink"
 }
 
 parse_arguments "$@"
 
-if [[ -n "$TOGGLE" ]]; then
+if [[ -n "$AUTO" ]]; then
+    set_best_sink_for_all_apps
+elif [[ -n "$TOGGLE" ]]; then
     if [[ -n "$APP" ]]; then
         toggle_sinks_for_app "$APP"
     else
