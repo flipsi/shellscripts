@@ -128,6 +128,7 @@ function install_tools()
         atool \
         bpytop \
         elinks \
+        eza \
         fd \
         ffmpegthumbnailer \
         fish \
