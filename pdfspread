@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+function _print_help_msg()
+{
+    cat <<-EOF
+Spread one pdf file into multiple, according to instructions in a schema file.
+
+Usage: $(basename "$0") [--dry-run] --schema <schema.tsv> <original.pdf>
+
+With \`--dry-run\` nothing happens, and instead the generated commands will be printed.
+The schema file should contain the following structure:
+
+page_number	result_filename_1
+page_number	result_filename_2
+[...]
+page_number	result_filename_n
+
+where <page_number> is the number in the original file that should be the first page of each output file.
+The filename will be parsed after the first space or tab character.
+
+EOF
+}
+
+function _require {
+  hash "$1" 2>/dev/null || {
+    echo >&2 "Error: '$1' is required, but was not found."; exit 1;
+  }
+}
+
+function _parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help)
+                _print_help_msg;
+                exit 0
+                ;;
+            -h)
+                _print_help_msg;
+                exit 0
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            --schema)
+                SCHEMA_FILE="$2"
+                shift
+                shift
+                ;;
+            *)
+                PDF_FILE="$1"
+                shift
+                ;;
+        esac
+    done
+    if [[ -z "$PDF_FILE" ]]; then
+        echo "Error: no pdf file given."
+        exit 1
+    elif [[ -z "$SCHEMA_FILE" ]]; then
+        echo "Error: no schema file given."
+        exit 1
+    fi
+}
+
+function _cut_out_pdf() {
+    FIRST_PAGE="$1"
+    LAST_PAGE="$2"
+    RESULT_FILE="$3"
+    if [[ -z "$DRY_RUN" ]]; then
+        _require pdfinfo
+        _require pdfseparate
+        _require pdfunite
+        TMP_DIR=$(mktemp -d "/tmp/pdfspread.$RESULT_FILE.XXXX")
+        pdfseparate -f "$FIRST_PAGE" -l "$LAST_PAGE" "$PDF_FILE" "$TMP_DIR/$RESULT_FILE-%d.pdf"
+        pdfunite "$TMP_DIR"/"$RESULT_FILE"-* "$RESULT_FILE" 
+        rm -rf "$TMP_DIR"
+    else
+        TMP_DIR="<TEMP-DIR>"
+        echo pdfseparate -f "$FIRST_PAGE" -l "$LAST_PAGE" "$PDF_FILE" "$TMP_DIR/$RESULT_FILE-%d.pdf"
+        echo pdfunite "$TMP_DIR/$RESULT_FILE-*" "$RESULT_FILE" 
+    fi
+}
+
+function _main() {
+    if ! [[ -f "$SCHEMA_FILE" ]]; then
+        echo "Error: file $SCHEMA_FILE not found."
+        exit 1
+    elif ! [[ -f "$PDF_FILE" ]]; then
+        echo "Error: file $PDF_FILE not found."
+        exit 1
+    fi
+    TOTAL_PAGE_COUNT=$(pdfinfo "$PDF_FILE" | grep --text Pages | sed 's/[^0-9]*//')
+    while IFS= read -r LINE; do
+        # TODO: exit on malformed schema file
+        if [[ -z "$PAGE_NO" ]]; then
+            PAGE_NO="${LINE%%[[:space:]]*}"
+            OUTPUT_FILE="${LINE#* }"
+            continue
+        else
+            PREVIOUS_PAGE_NO="$PAGE_NO"
+            PREVIOUS_OUTPUT_FILE="$OUTPUT_FILE"
+            PAGE_NO="${LINE%%[[:space:]]*}"
+            OUTPUT_FILE="${LINE#* }"
+        fi
+        LAST_PAGE_NO=$(("$PAGE_NO" - 1))
+        _cut_out_pdf "$PREVIOUS_PAGE_NO" "$LAST_PAGE_NO" "$PREVIOUS_OUTPUT_FILE"
+    done < "$SCHEMA_FILE"
+    _cut_out_pdf "$PAGE_NO" "$TOTAL_PAGE_COUNT" "$OUTPUT_FILE"
+}
+
+set -o errexit
+set -o pipefail
+_parse_arguments "$@"
+_main
