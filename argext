@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Function to display help information
+show_help() {
+    echo "Usage: $0 [--dry-run] command filename.ext [arg1 arg2 ... argN]"
+    echo
+    echo "Options:"
+    echo "  --dry-run     Print the command to be executed without running it."
+    echo "  -h, --help    Show this help message and exit."
+    echo
+    echo "Description:"
+    echo "  This script constructs a new filename based on the provided filename and arguments."
+    echo "  It then executes the specified command with the original filename, the new filename,"
+    echo "  and the additional arguments."
+}
+
+# Default mode: execute commands
+dry_run=false
+
+# Parse options
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --dry-run)
+            dry_run=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Error: Unknown option '$1'"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Check if at least two arguments are provided
+if [ "$#" -lt 2 ]; then
+    echo "Error: Insufficient arguments provided."
+    show_help
+    exit 1
+fi
+
+# Extract the command and filename
+command=$1
+filename=$2
+
+# Extract the base name and extension from the filename
+basename="${filename%.*}"
+extension="${filename##*.}"
+
+# Construct the new filename by appending arguments
+new_filename="$basename"
+shift 2 # Remove the command and original filename from the arguments
+
+for arg in "$@"; do
+    new_filename+=".$arg"
+done
+
+new_filename+=".$extension"
+
+# Check if the new filename already exists
+if [ -e "$new_filename" ]; then
+    echo "Error: File '$new_filename' already exists. Aborting."
+    exit 1
+fi
+
+# Construct the full command
+full_command="$command \"$filename\" \"$new_filename\" $*"
+
+# Handle --dry-run mode
+if $dry_run; then
+    echo "Command: $full_command"
+else
+    # Execute the command
+    echo "Executing: $full_command"
+    eval "$full_command"
+fi
+
