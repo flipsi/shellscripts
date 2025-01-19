@@ -148,6 +148,7 @@ function install_tools()
         ncdu \
         net-tools \
         odt2txt \
+        pdfgrep \
         pydf \
         ripgrep \
         rsync \
