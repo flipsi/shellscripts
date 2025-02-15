@@ -81,6 +81,24 @@ function configure_pam_faillock()
 
 function configure_keyboard_layout()
 {
+    # For X11
+    sudo mkdir -p "/etc/X11/xorg.conf.d"
+    FILE="/etc/X11/xorg.conf.d/00-keyboard.conf"
+    if test -f "$FILE"; then
+        echo_skipped "X11 keyboard config already exist."
+    else
+        sudo tee "$FILE" <<EOF
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "de,us"
+        Option "XkbModel" "pc104"
+        Option "XkbVariant" "nodeadkeys"
+EndSection
+EOF
+    echo_success "X11 keyboard layout set to 'de' (nodeadkeys variant)."
+    fi
+
     # For Linux console
     LAYOUT="de-latin1-nodeadkeys"
     if localectl status | grep -q "VC Keymap: $LAYOUT"; then
@@ -102,23 +120,6 @@ function configure_keyboard_layout()
         else
             echo_warning "Linux console layout '$LAYOUT' not found!"
         fi
-    fi
-
-    # For X11
-    FILE="/etc/X11/xorg.conf.d/00-keyboard.conf"
-    if test -f "$FILE"; then
-        echo_skipped "X11 keyboard config already exist."
-    else
-        sudo tee "$FILE" <<EOF
-Section "InputClass"
-        Identifier "system-keyboard"
-        MatchIsKeyboard "on"
-        Option "XkbLayout" "de,us"
-        Option "XkbModel" "pc104"
-        Option "XkbVariant" "nodeadkeys"
-EndSection
-EOF
-    echo_success "X11 keyboard layout set to 'de' (nodeadkeys variant)."
     fi
 }
 
@@ -374,9 +375,9 @@ function install_misc()
 #install_yay
 #configure_pacman
 #configure_pam_faillock
-#configure_keyboard_layout
+# configure_keyboard_layout
 #setup_ssh
-setup_fonts
+# setup_fonts
 #clone_and_install_dotfiles
 # # setup_password_store
 #setup_power_management
