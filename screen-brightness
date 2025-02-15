@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+# BL_DEVICE=/sys/class/backlight/*/brightness
+BL_DEVICE=/sys/class/backlight/intel_backlight/brightness
+BL_MAX=/sys/class/backlight/intel_backlight/max_brightness
+DEFAULT_STEP=100
+
+# the udev rule is only to be able to execute this without sudo
+# but it doesn't work (see FIXME below)
+
+UDEV_RULE_FILE=/etc/udev/rules.d/2041-allow-backlight-for-video-members
+
+# IFS='' read -r -d '' UDEV_RULE <<"EOF"
+# ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", GROUP="video", MODE="0664"
+# EOF
+
+IFS='' read -r -d '' UDEV_RULE <<"EOF"
+SUBSYSTEM=="backlight", ACTION=="add",
+RUN+="/bin/chgrp video /sys/class/backlight/intel_backlight/brightness",
+RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
+EOF
+
+function has
+{
+  command -v "$1" >/dev/null 2>&1
+}
+
+function check_backlight_device
+{
+    if [[ ! -f "$BL_DEVICE" ]]; then
+        echo "Device $BL_DEVICE does not exist, please adjust."
+        exit 1
+   fi
+}
+
+function add_user_to_video_group
+{
+    if grep -q -v video <(groups); then
+        sudo usermod -a -G video flipsi
+        exec su -l "$USER" # reload groups in this shell
+        USE_SUDO=1
+    fi
+}
+
+function add_udev_rule
+{
+    # sudo rm "$UDEV_RULE_FILE"
+    if [[ ! -f "$UDEV_RULE_FILE" ]]; then
+        echo "Creating $UDEV_RULE_FILE"
+        echo "$UDEV_RULE" | sudo tee "$UDEV_RULE_FILE"
+        sudo udevadm control --reload-rules && sudo udevadm trigger
+        USE_SUDO=1
+    fi
+}
+
+function adjust_directly_without_sudo
+{
+    NEW_VALUE="$1"
+    echo "$NEW_VALUE" > "$BL_DEVICE" # FIXME
+}
+
+function adjust_directly_with_sudo
+{
+    NEW_VALUE="$1"
+    echo "$NEW_VALUE" | sudo tee "$BL_DEVICE"
+}
+
+function adjust_directly
+{
+    CURRENT_VALUE=$(cat "$BL_DEVICE")
+    MAX_VALUE=$(cat "$BL_MAX")
+    STEP="${2:-$DEFAULT_STEP}"
+    if [[ "$1" == "up" ]]; then
+        NEW_VALUE=$((CURRENT_VALUE+STEP))
+    elif [[ "$1" == "down" ]]; then
+        NEW_VALUE=$((CURRENT_VALUE-STEP))
+    else
+        echo "Screen brightness is at $CURRENT_VALUE. Maximum is $MAX_VALUE."
+        echo "Pass 'up' or 'down' (plus optional step) as an argument to change it."
+        exit 1
+    fi
+    if [[ -n "$USE_SUDO" ]]; then
+        adjust_directly_without_sudo "$NEW_VALUE"
+    else
+        adjust_directly_without_sudo "$NEW_VALUE" || adjust_directly_with_sudo "$NEW_VALUE"
+    fi
+
+}
+
+function adjust_with_xbacklight
+{
+    STEP="${2:-$DEFAULT_STEP}"
+    if [[ "$1" == "up" ]]; then
+        xbacklight -inc "$STEP"
+    elif [[ "$1" == "down" ]]; then
+        xbacklight -dec "$STEP"
+    fi
+}
+
+function main
+{
+    if has xbacklight; then
+        adjust_with_xbacklight "$@"
+    else
+        check_backlight_device
+        add_user_to_video_group
+        add_udev_rule
+        adjust_directly "$@"
+    fi
+}
+
+set -e
+main "$@"
