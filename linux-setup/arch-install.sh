@@ -198,6 +198,7 @@ grub-mkconfig -o /boot/grub/grub.cfg # on ubuntu this is wrapped in a script `up
 pacman -S refind
 refind-install
 
+# mkinitcpio -P
 
 ####################
 # reboot and enjoy #
@@ -205,4 +206,3 @@ refind-install
 exit # chroot
 
 reboot
-
