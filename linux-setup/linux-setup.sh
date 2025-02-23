@@ -154,7 +154,7 @@ function setup_flatpak
 
 function install_with_flatpak
 {
-    flatpak install "$@"
+    flatpak install -y "$@"
 }
 
 function install_packages
@@ -246,9 +246,11 @@ function install_all_packages
 
     setup_flatpak
     install_with_flatpak  \
+        com.slack.Slack \
         com.spotify.Client \
         com.vivaldi.Vivaldi \
-        org.telegram.desktop
+        org.telegram.desktop \
+        org.signal.Signal
 
 
     if [[ "$OS" = "Fedora Linux" ]]; then
