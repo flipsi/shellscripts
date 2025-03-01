@@ -342,11 +342,53 @@ function configure_pam_faillock
     append_once "$filename" "unlock_time = 120"
 }
 
-function enable_zsa_keyboard_flashing
+function enable_zsa_keyboard_flashing_and_keymapp_access
 {
     local FILENAME='/etc/udev/rules.d/50-zsa.rules'
-    append_once "$FILENAME" 'KERNEL=="hidraw*", ATTRS{idVendor}=="16c0", MODE="0664", GROUP="plugdev"'
-    append_once "$FILENAME" 'KERNEL=="hidraw*", ATTRS{idVendor}=="3297", MODE="0664", GROUP="plugdev"'
+    if [[ -f "$FILENAME" ]]; then
+        echo_skipped "udev rules for ZSA keyboards already exist."
+    else
+        sudo tee "$FILENAME" > /dev/null <<EOF
+KERNEL=="hidraw*", ATTRS{idVendor}=="16c0", MODE="0664", GROUP="plugdev"
+KERNEL=="hidraw*", ATTRS{idVendor}=="3297", MODE="0664", GROUP="plugdev"
+
+# Legacy rules for live training over webusb (Not needed for firmware v21+)
+  # Rule for all ZSA keyboards
+  SUBSYSTEM=="usb", ATTR{idVendor}=="3297", GROUP="plugdev"
+  # Rule for the Moonlander
+  SUBSYSTEM=="usb", ATTR{idVendor}=="3297", ATTR{idProduct}=="1969", GROUP="plugdev"
+  # Rule for the Ergodox EZ
+  SUBSYSTEM=="usb", ATTR{idVendor}=="feed", ATTR{idProduct}=="1307", GROUP="plugdev"
+  # Rule for the Planck EZ
+  SUBSYSTEM=="usb", ATTR{idVendor}=="feed", ATTR{idProduct}=="6060", GROUP="plugdev"
+
+# Wally Flashing rules for the Ergodox EZ
+ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="04[789B]?", ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="04[789A]?", ENV{MTP_NO_PROBE}="1"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="04[789ABCD]?", MODE:="0666"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="04[789B]?", MODE:="0666"
+
+# Keymapp / Wally Flashing rules for the Moonlander and Planck EZ
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", MODE:="0666", SYMLINK+="stm32_dfu"
+# Keymapp Flashing rules for the Voyager
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="3297", MODE:="0666", SYMLINK+="ignition_dfu"
+EOF
+    echo_success "Created ZSA keyboard udev rules."
+    fi
+}
+
+function install_zsa_keymapp
+{
+    if has keymapp; then
+        echo_skipped 'ZSA Keymapp is already installed.'
+    else
+        install_packages gtk3 webkit2gtk4.1 libusb
+        TARBALL='/tmp/keymapp-latest.tar.gz'
+        curl -o "$TARBALL" \
+            https://oryx.nyc3.cdn.digitaloceanspaces.com/keymapp/keymapp-latest.tar.gz
+        sudo aunpack -X '/usr/local/bin' "$TARBALL" keymapp
+        echo_success 'Installed ZSA Keymapp'
+    fi
 }
 
 function configure_keyboard_layout
@@ -529,7 +571,8 @@ function main
     install_all_packages
     configure_sudoers
     configure_pam_faillock
-    enable_zsa_keyboard_flashing
+    enable_zsa_keyboard_flashing_and_keymapp_access
+    install_zsa_keymapp
     configure_keyboard_layout
     setup_ssh
     setup_fonts
@@ -539,6 +582,7 @@ function main
     add_user_to_group_if_not_in_group docker
     add_user_to_group_if_not_in_group audio
     add_user_to_group_if_not_in_group video
+    setup_printer
     sudo systemctl enable --now bluetooth.service
 
     if [[ "$OS" = "Fedora Linux" ]]; then
@@ -547,7 +591,6 @@ function main
         configure_pacman
         install_yay
         install_i3_desktop
-        setup_printer
     fi
 }
 
