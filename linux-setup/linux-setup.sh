@@ -78,7 +78,13 @@ function backup_file_with_date
     local file="$1"
     local backup="${file}.$(date +%F-%H%M).bak"
     if [ -w "$file" ]; then cp_cmd="cp"; else cp_cmd="sudo cp"; fi
-    for existing in "${file}".*.bak; do [ -e "$existing" ] && cmp -s "$file" "$existing" && return; done
+    for existing in "${file}".*.bak; do
+        if [ -e "$existing" ] && sudo cmp -s "$file" "$existing"; then
+            echo_skipped "Backup file $existing already exists and has the exact same content."
+            return
+        fi
+    done
+    echo_success "Created backup file $backup"
     $cp_cmd "$file" "$backup"
 }
 
@@ -95,7 +101,9 @@ function append_once
 function configure_pacman
 {
     backup_file_with_date '/etc/pacman.conf'
-    sudo sed -i 's/^#Color/Color/' '/etc/pacman.conf'
+    sudo sed -i 's/^#Color/Color/' '/etc/pacman.conf' \
+        && echo_success "Pacman configured" \
+        || echo_success "Pacman already configured."
 }
 
 function install_yay
@@ -134,6 +142,18 @@ function add_user_to_group_if_not_in_group
     else
         echo_error "Group '$groupname' does not exist."
     fi
+}
+
+function configure_dnf
+{
+    local file='/etc/dnf/dnf.conf'
+    backup_file_with_date "$file"
+    append_once "$file" 'max_parallel_downloads=10'
+    append_once "$file" 'fastestmirror=true'
+    # enable fusion repository
+    install_with_dnf \
+        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm \
+        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
 }
 
 function enable_copr_repo
@@ -176,6 +196,7 @@ function install_all_packages
         alacritty \
         arandr \
         atool \
+        audacity \
         bluez blueman \
         bpytop \
         chromium \
@@ -186,8 +207,6 @@ function install_all_packages
         eza \
         fd \
         feh \
-        ffmpeg-free \
-        ffmpegthumbnailer \
         fish \
         fzf \
         fzf \
@@ -200,6 +219,7 @@ function install_all_packages
         jq \
         keychain \
         kitty \
+        krita \
         libnotify \
         lsof \
         lynx \
@@ -241,6 +261,7 @@ function install_all_packages
         xdotool \
         xfce4-screenshooter \
         xsel \
+        yt-dlp \
         zathura zathura-pdf-poppler poppler \
         zip
 
@@ -275,6 +296,22 @@ function install_all_packages
             pydf \
             zsa-keymapp-bin
 
+    fi
+}
+
+function update_firmware
+{
+    if [[ "$OS" = "Fedora Linux" ]]; then
+        sudo fwupdmgr get-devices
+        sudo fwupdmgr refresh --force
+        sudo fwupdmgr get-updates
+        # requires interactive confirmation
+        # fails if no updates available
+        sudo fwupdmgr update \
+            && echo_success "Upgraded firmware." \
+            || echo_skipped "Firmware is up to date."
+    else
+        echo_skipped "No firmware update command for OS $OS configured."
     fi
 }
 
@@ -313,14 +350,11 @@ function setup_printer
     fi
 }
 
-# FIXME
-# Problem: cannot install the best candidate for the job
-# - conflicting requests
 function use_unfree_ffmpeg
 {
-    # https://rpmfusion.org/Howto/Multimedia?highlight=%28%5CbCategoryHowto%5Cb%29
     sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
     sudo dnf update -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
+    install_packages --allowerasing ffmpeg-free ffmpegthumbnailer
 }
 
 function configure_sudoers
@@ -569,6 +603,7 @@ function setup_password_store()
 function main
 {
     install_all_packages
+    # update_firmware
     configure_sudoers
     configure_pam_faillock
     enable_zsa_keyboard_flashing_and_keymapp_access
@@ -586,6 +621,7 @@ function main
     sudo systemctl enable --now bluetooth.service
 
     if [[ "$OS" = "Fedora Linux" ]]; then
+        configure_dnf
         use_unfree_ffmpeg
     elif [[ "$OS" = "Arch Linux" ]]; then
         configure_pacman
@@ -595,6 +631,10 @@ function main
 }
 
 set -e
+
+mkdir -p "$HOME/os/"
+LOGFILE="$HOME/os/linux-setup-$(date +%Y-%m-%d-%H-%M).log"
+exec > >(tee -a "$LOGFILE") 2>&1
 
 if [[ "$SUSER" = "root" ]]; then
     echo_error "Please execute this as non-root."
