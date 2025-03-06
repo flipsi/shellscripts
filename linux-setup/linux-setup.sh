@@ -64,10 +64,10 @@ function get_linux_distro
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         OS="$NAME"
-        echo "Distribution: $NAME"
-        echo "Version: $VERSION"
-    elif [ -f /etc/issue ]; then
-        echo "Distro: $(cat /etc/issue)"
+        # echo "Distribution: $NAME"
+        # echo "Version: $VERSION"
+    # elif [ -f /etc/issue ]; then
+    #     echo "Distro: $(cat /etc/issue)"
     else
         echo_error "Unable to determine Linux distribution."
     fi
