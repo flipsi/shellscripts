@@ -246,6 +246,8 @@ function install_all_packages
         shellcheck-sarif \
         source-highlight \
         sox \
+        syncthing \
+        texlive texlive-standalone latexmk \
         the_silver_searcher \
         thunar \
         tig \
@@ -257,6 +259,7 @@ function install_all_packages
         unzip \
         usbutils \
         vlc \
+        wakeonlan \
         xclip \
         xdotool \
         xfce4-screenshooter \
@@ -273,7 +276,6 @@ function install_all_packages
         org.telegram.desktop \
         org.signal.Signal
 
-
     if [[ "$OS" = "Fedora Linux" ]]; then
         # TODO: fix `ip` command not found ("iproute" package does not contain it???)
         enable_copr_repo mamg22/nsxiv
@@ -282,7 +284,8 @@ function install_all_packages
             clipmenu \
             dex-autostart \
             nsxiv \
-            python3-speedtest-cli
+            python3-speedtest-cli \
+            wol
 
     elif [[ "$OS" = "Arch Linux" ]]; then
         install_i3_desktop
@@ -294,6 +297,7 @@ function install_all_packages
             inetutils \
             mlocate \
             pydf \
+            wakeonlan \
             zsa-keymapp-bin
 
     fi
