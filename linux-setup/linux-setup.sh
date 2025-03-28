@@ -209,8 +209,8 @@ function install_all_packages
         feh \
         fish \
         fzf \
-        fzf \
         gcolor3 \
+        gimp \
         git-delta \
         git-revise \
         highlight \
