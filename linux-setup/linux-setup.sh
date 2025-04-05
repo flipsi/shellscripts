@@ -213,6 +213,7 @@ function install_all_packages
         gimp \
         git-delta \
         git-revise \
+        goobook \
         highlight \
         htop \
         iproute \
@@ -221,21 +222,28 @@ function install_all_packages
         kitty \
         krita \
         libnotify \
+        libreoffice \
         lsof \
         lynx \
         mediainfo \
+        musescore \
         ncdu \
         neovim \
+        neomutt mutt-wizard msmtp isync pass notmuch notmuch-mutt \
         net-tools \
+        nginx \
         notification-daemon \
         nsxiv \
         odt2txt \
         pass \
         pdfgrep \
+        php php-cli php-common php-fpm \
         picom  \
         playerctl \
         podman \
         polybar \
+        pwgen \
+        python3-pip \
         qutebrowser \
         ranger \
         redshift \
@@ -257,8 +265,10 @@ function install_all_packages
         trash-cli \
         unclutter-xfixes \
         unzip \
+        urlscan \
         usbutils \
         vlc \
+        vlc-gui-ncurses \
         wakeonlan \
         xclip \
         xdotool \
@@ -295,9 +305,10 @@ function install_all_packages
     elif [[ "$OS" = "Arch Linux" ]]; then
         install_i3_desktop
         install_packages \
-            bluez-utils  \
+            bluez-utils \
             browserpass browserpass-chromium \
-            fuse-common fuse2 ntfs-3g
+            cyrus-sasl-xoauth2 \
+            fuse-common fuse2 ntfs-3g \
             gnu-netcat \
             inetutils \
             mlocate \
@@ -338,6 +349,8 @@ function install_i3_desktop
         dex picom redshift unclutter feh xfce4-screenshooter \
         xsel xclip clipmenu \
         cups cups-pdf
+
+    pip install i3-py
 }
 
 function setup_printer
