@@ -625,7 +625,7 @@ function setup_password_store()
 function main
 {
     install_all_packages
-    # update_firmware
+    # update_firmware # not necessarily want that
     configure_sudoers
     configure_pam_faillock
     enable_zsa_keyboard_flashing_and_keymapp_access
@@ -658,10 +658,15 @@ mkdir -p "$HOME/os/"
 LOGFILE="$HOME/os/linux-setup-$(date +%Y-%m-%d-%H-%M).log"
 exec > >(tee -a "$LOGFILE") 2>&1
 
-if [[ "$SUSER" = "root" ]]; then
+if [[ "$USER" = "root" ]]; then
     echo_error "Please execute this as non-root."
     exit 1
 else
     get_linux_distro
-    main
+    # the majority of updates of this script are new packages, so this is convenient:
+    if [[ "$1" = "init" ]]; then
+        main
+    else
+        install_all_packages
+    fi
 fi
