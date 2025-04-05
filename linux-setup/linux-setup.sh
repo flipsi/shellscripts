@@ -168,7 +168,7 @@ function install_with_dnf
 
 function setup_flatpak
 {
-    install_with_dnf flatpak
+    install_with_dnf flatpak flatseal
     flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 }
 
@@ -275,6 +275,11 @@ function install_all_packages
         com.vivaldi.Vivaldi \
         org.telegram.desktop \
         org.signal.Signal
+
+    # allow vivaldi to write files to download directory
+    # (note this is untested, I used flatseal to to it)
+    # flatpak info --show-permissions com.vivaldi.Vivaldi
+    sudo flatpak override com.vivaldi.Vivaldi --filesystem="$HOME/tmp"
 
     if [[ "$OS" = "Fedora Linux" ]]; then
         # TODO: fix `ip` command not found ("iproute" package does not contain it???)
