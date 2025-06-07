@@ -61,7 +61,10 @@ function require
 
 function get_linux_distro
 {
-    if [ -f /etc/os-release ]; then
+    if [ "$(hostname)" = 'nott' ] && type pacman > /dev/null; then
+        # My work Arch Linux thinks she's Ubuntu
+        OS="Arch Linux"
+    elif [ -f /etc/os-release ]; then
         source /etc/os-release
         OS="$NAME"
         # echo "Distribution: $NAME"
