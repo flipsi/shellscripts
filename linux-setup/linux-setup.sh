@@ -297,7 +297,7 @@ function install_all_packages
     sudo flatpak override com.vivaldi.Vivaldi --filesystem="$HOME/tmp"
 
     if [[ "$OS" = "Fedora Linux" ]]; then
-        # TODO: fix `ip` command not found ("iproute" package does not contain it???)
+        # Note: If the `ip` command ("iproute" package) is not found, you have to run with sudo ;)
         enable_copr_repo mamg22/nsxiv
         enable_copr_repo skidnik/clipmenu
         install_packages \
