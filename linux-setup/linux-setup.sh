@@ -364,11 +364,11 @@ function setup_printer
     sudo systemctl enable --now cups.service
     if [[ "$OS" = "Arch Linux" ]]; then
         install_packages brother-hll2375dw
-        echo_warning "Driver installed. Now please install printer via CUPS web API (http://localhost:631/admin/)."
+        echo_warning "Driver installed. Ideally that's it, but if not, you might have to install printer via CUPS web API (http://localhost:631/admin/)."
     fi
 
     if lpstat -t | grep -q 'no system default destination'; then
-        PRINTER=$(lpstat -t | grep -q 'Brother' | head -n1 | cut -d' ' -f1)
+        PRINTER=$(lpstat -t | grep -E '^Brother' | head -n1 | cut -d' ' -f1)
         if [[ -n "$PRINTER" ]]; then
             lpoptions -d "$PRINTER"
             echo_success "Default printer set to $PRINTER"
