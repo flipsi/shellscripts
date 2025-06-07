@@ -666,10 +666,12 @@ if [[ "$USER" = "root" ]]; then
     exit 1
 else
     get_linux_distro
-    # the majority of updates of this script are new packages, so this is convenient:
     if [[ "$1" = "init" ]]; then
         main
+    elif [[ -n "$1" ]]; then
+        eval "$1"
     else
+        # the majority of changes of this script are new packages, so this is convenient:
         install_all_packages
     fi
 fi
