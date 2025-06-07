@@ -245,6 +245,7 @@ function install_all_packages
         polybar \
         pwgen \
         python3-pip \
+        prettier \
         qutebrowser \
         ranger \
         redshift \
