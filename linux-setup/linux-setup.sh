@@ -304,6 +304,7 @@ function install_all_packages
             clipmenu \
             dex-autostart \
             nsxiv \
+            pipx \
             python3-speedtest-cli \
             wol
 
@@ -318,10 +319,14 @@ function install_all_packages
             inetutils \
             mlocate \
             pydf \
+            python-pipx \
             wakeonlan \
             zsa-keymapp-bin
 
     fi
+
+    # pipx ensurepath
+    # sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
 }
 
 function update_firmware
