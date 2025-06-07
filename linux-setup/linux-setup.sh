@@ -257,6 +257,7 @@ function install_all_packages
         rsync \
         shellcheck \
         shellcheck-sarif \
+        sshfs \
         source-highlight \
         sox \
         syncthing \
