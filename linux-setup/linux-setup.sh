@@ -234,6 +234,7 @@ function install_all_packages
         nginx \
         notification-daemon \
         nsxiv \
+        ntp \
         odt2txt \
         pass \
         pdfgrep \
@@ -641,6 +642,7 @@ function main
     add_user_to_group_if_not_in_group video
     setup_printer
     sudo systemctl enable --now bluetooth.service
+    sudo systemctl enable --now ntpd.service
 
     if [[ "$OS" = "Fedora Linux" ]]; then
         configure_dnf
