@@ -3,6 +3,7 @@
 # BL_DEVICE=/sys/class/backlight/*/brightness
 BL_DEVICE=/sys/class/backlight/intel_backlight/brightness
 BL_MAX=/sys/class/backlight/intel_backlight/max_brightness
+
 DEFAULT_STEP=100
 
 # the udev rule is only to be able to execute this without sudo
@@ -19,6 +20,22 @@ SUBSYSTEM=="backlight", ACTION=="add",
 RUN+="/bin/chgrp video /sys/class/backlight/intel_backlight/brightness",
 RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
 EOF
+
+function print_help
+{
+    echo "Usage: screen-brightness [COMMAND] [STEP]"
+    echo "Commands:"
+    echo "  up                   Increase brightness"
+    echo "  down                 Decrease brightness"
+    echo "  --help               Show this help message"
+    echo
+    echo "Optional:"
+    echo "  STEP                 Amount to adjust brightness (default: $DEFAULT_STEP)"
+    echo
+    echo "Example:"
+    echo "  screen-brightness up 200    # Increase brightness by 200"
+    echo "  screen-brightness down      # Decrease brightness by default step"
+}
 
 function has
 {
@@ -76,7 +93,7 @@ function adjust_directly
         NEW_VALUE=$((CURRENT_VALUE-STEP))
     else
         echo "Screen brightness is at $CURRENT_VALUE. Maximum is $MAX_VALUE."
-        echo "Pass 'up' or 'down' (plus optional step) as an argument to change it."
+        print_help
         exit 1
     fi
     if [[ -n "$USE_SUDO" ]]; then
@@ -99,6 +116,11 @@ function adjust_with_xbacklight
 
 function main
 {
+    if [[ "$1" == "--help" ]]; then
+        print_help
+        exit 0
+    fi
+
     if has xbacklight; then
         adjust_with_xbacklight "$@"
     else
