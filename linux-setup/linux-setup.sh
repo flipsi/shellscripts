@@ -360,6 +360,8 @@ function install_i3_desktop
 
 function setup_printer
 {
+    install_packages cups cups-pdf
+    sudo systemctl enable --now cups.service
     if [[ "$OS" = "Arch Linux" ]]; then
         install_packages brother-hll2375dw
         echo_warning "Driver installed. Now please install printer via CUPS web API (http://localhost:631/admin/)."
