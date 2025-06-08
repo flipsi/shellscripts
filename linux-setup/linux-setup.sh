@@ -301,8 +301,10 @@ function install_all_packages
         # Note: If the `ip` command ("iproute" package) is not found, you have to run with sudo ;)
         enable_copr_repo mamg22/nsxiv
         enable_copr_repo skidnik/clipmenu
+        enable_copr_repo phrdina/cyrus-sasl-xoauth2
         install_packages \
             clipmenu \
+            cyrus-sasl-xoauth2 \
             dex-autostart \
             nsxiv \
             pipx \
