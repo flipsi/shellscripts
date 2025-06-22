@@ -317,6 +317,7 @@ function install_all_packages
             bluez-utils \
             browserpass browserpass-chromium \
             cyrus-sasl-xoauth2 \
+            dex \
             fuse-common fuse2 ntfs-3g \
             gnu-netcat \
             inetutils \
@@ -359,9 +360,10 @@ function install_i3_desktop
         pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-utils pamixer \
         python dbus-python \
         libnotify notification-daemon \
-        dex picom redshift unclutter feh xfce4-screenshooter \
+        picom redshift unclutter feh xfce4-screenshooter \
         xsel xclip clipmenu \
-        cups cups-pdf
+        cups cups-pdf \
+        numlockx
 
     pip install i3-py
 }
