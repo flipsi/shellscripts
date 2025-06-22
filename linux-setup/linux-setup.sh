@@ -389,11 +389,12 @@ function setup_printer
     fi
 }
 
-function use_unfree_ffmpeg
+function use_proprietary_ffmpeg
 {
-    sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
+    # sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
     sudo dnf update -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
-    install_packages --allowerasing ffmpeg-free ffmpegthumbnailer
+    # install_packages --allowerasing ffmpeg-free ffmpegthumbnailer
+    install_packages --allowerasing ffmpeg ffmpeg-devel ffmpegthumbnailer
 }
 
 function configure_sudoers
@@ -662,7 +663,7 @@ function main
 
     if [[ "$OS" = "Fedora Linux" ]]; then
         configure_dnf
-        use_unfree_ffmpeg
+        use_proprietary_ffmpeg
     elif [[ "$OS" = "Arch Linux" ]]; then
         configure_pacman
         install_yay
