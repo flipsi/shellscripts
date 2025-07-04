@@ -227,6 +227,7 @@ function install_all_packages
         libnotify \
         libreoffice \
         lsof \
+        lshw \
         lynx \
         mediainfo \
         musescore \
