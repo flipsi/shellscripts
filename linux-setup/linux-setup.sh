@@ -240,6 +240,7 @@ function install_all_packages
         nsxiv \
         ntp \
         odt2txt \
+        pandoc \
         pass \
         pdfgrep \
         php php-cli php-common php-fpm \
