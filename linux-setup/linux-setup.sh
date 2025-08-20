@@ -216,7 +216,6 @@ function install_all_packages
         gimp \
         git-delta \
         git-revise \
-        goobook \
         highlight \
         htop \
         iproute \
@@ -333,6 +332,11 @@ function install_all_packages
 
     # pipx ensurepath
     # sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
+    
+    # pipx install aider-install
+    pipx install \
+        goobook
+
 }
 
 function update_firmware
