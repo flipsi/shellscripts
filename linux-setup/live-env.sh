@@ -5,6 +5,8 @@
 
 # Usage:
 #     wget -q -O - "$SELF_URL" | bash -i
+# Or:
+#     curl -L "$SELF_URL" | bash -i
 
 # SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/live-env.sh'
 SELF_URL='https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/live-env.sh'
@@ -20,8 +22,8 @@ BOOT_PARTITION='/dev/nvme0n1p4'
 LUKS_PARTITION='/dev/nvme0n1p3'
 LUKS_VOLUME='luks_root'
 LUKS_GROUP='supergroup'
-ROOT_PARTITION='/dev/$LUKS_GROUP/fedora-root'
-HOME_PARTITION='/dev/$LUKS_GROUP/home'
+ROOT_PARTITION="/dev/$LUKS_GROUP/fedora-root"
+HOME_PARTITION="/dev/$LUKS_GROUP/home"
 
 
 function download_self() {
