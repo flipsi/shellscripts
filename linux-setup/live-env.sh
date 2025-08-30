@@ -132,19 +132,22 @@ function reinstall_grub() {
     # GRUB_CONFIG_FILE="/boot/grub/grub.cfg" # what a pitfall
     GRUB_CONFIG_FILE="/boot/grub2/grub.cfg"
 
+    GRUB_INSTALL_BINARY=$(if has grub2-install; then echo grub2-install; else echo grub-install; fi)
+    GRUB_MKCONFIG_BINARY=$(if has grub2-mkconfig; then echo grub2-mkconfig; else echo grub-mkconfig; fi)
+
     # dnf reinstall grub2-efi grub2-efi-modules shim-\*
     # dnf reinstall os-prober
 
     # install GRUB bootloader to EFI partition
     # force flag to ignore warning about only working when safe boot is disabled
-    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck --force
+    eval "$GRUB_INSTALL_BINARY" --target=x86_64-efi --bootloader-id=grub_uefi --recheck --force
 
     # vim "$SYSTEM_CONFIG_FILE"
     ## GRUB_ENABLE_BLSCFG="true"
 
     # generate grub configuration on boot partition
     cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
-    grub-mkconfig -o "$GRUB_CONFIG_FILE"
+    eval "$GRUB_MKCONFIG_BINARY" -o "$GRUB_CONFIG_FILE"
 }
 
 function setup() {
