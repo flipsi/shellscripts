@@ -4,7 +4,7 @@
 # Note that this script is not generic and very specific to my personal needs and convention.
 
 # Usage:
-#     wget -q -O - "$SELF_URL" | bash
+#     wget -q -O - "$SELF_URL" | bash -i
 
 # SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/live-env.sh'
 SELF_URL='https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/live-env.sh'
