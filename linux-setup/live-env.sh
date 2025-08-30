@@ -8,6 +8,24 @@
 # Or:
 #     curl -L "$SELF_URL" | bash -i
 
+function print_usage() {
+    cat <<-EOF
+Flipsi's convenient Linux live environment helper.
+
+Usage: $(basename "$0") [FUNCTION]
+
+Invoke with specific function name or omit to execute everything.
+
+EOF
+}
+
+# Resources:
+#
+# GRUB on Fedora
+# https://docs.fedoraproject.org/en-US/quick-docs/grub2-bootloader/
+# https://www.baeldung.com/linux/grub-menu-management
+
+
 # SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/live-env.sh'
 SELF_URL='https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/live-env.sh'
 
@@ -90,6 +108,7 @@ function mount_partitions() {
     fi
     sudo mount "$ROOT_PARTITION" /mnt
     sudo mount "$BOOT_PARTITION" /mnt/boot
+    sudo mount -o bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
     sudo mount "$EFI_PARTITION" /mnt/boot/efi
     sudo mount "$HOME_PARTITION" /mnt/home
     for d in dev proc run sys; do
@@ -98,12 +117,32 @@ function mount_partitions() {
     lsblk --fs
 }
 
+# FIXME
 function reinstall_grub() {
+    # The grub2-mkconfig comman creates a new configuration based on the currently running system. It collects information from the /boot partition (or directory), from the /etc/default/grub file, and the customizable scripts in /etc/grub.d.
+    # The configuration format is changing with time, and a new configuration file can become slightly incompatible with the older versions of the bootloader. Always run grub2-install before you create the configuration file with grub2-mkconfig.
+    #
+    # Under EFI, GRUB2 looks for its configuration in /boot/efi/EFI/fedora/grub.cfg, however the postinstall script of grub2-common installs a small shim which chains to the standard configuration at /boot/grub2/grub.cfg.
+    #
+    # First, we should look at how the GRUB menu entries are stored. The usual way is to keep definitions of entries in the /boot/grub2/grub.cfg file in the menuentry blocks. However, Fedora 30 adopted the BootLoaderSpec (BLS) specification, which demands keeping each entry definition in a separate file. We can find these files in the /boot/loader/entries folder.
+    #
+    # On Fedora, `grubby` was used for a while to manage GRUB menu entries. But it's deprecated and unmaintained now.
+
     SYSTEM_CONFIG_FILE="/etc/default/grub"
-    # GRUB_CONFIG_FILE="/boot/grub/grub.cfg"
+    # GRUB_CONFIG_FILE="/boot/grub/grub.cfg" # what a pitfall
     GRUB_CONFIG_FILE="/boot/grub2/grub.cfg"
-    # FIXME
-    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
+
+    # dnf reinstall grub2-efi grub2-efi-modules shim-\*
+    # dnf reinstall os-prober
+
+    # install GRUB bootloader to EFI partition
+    # force flag to ignore warning about only working when safe boot is disabled
+    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck --force
+
+    # vim "$SYSTEM_CONFIG_FILE"
+    ## GRUB_ENABLE_BLSCFG="true"
+
+    # generate grub configuration on boot partition
     cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
     grub-mkconfig -o "$GRUB_CONFIG_FILE"
 }
@@ -111,20 +150,22 @@ function reinstall_grub() {
 function setup() {
     use_external_screen_if_available
     if ! in_X; then
-		setfont ter-220n
-	fi
-	set_keyboard_layout
+	setfont ter-220n
+    fi
+    set_keyboard_layout
 }
 
 function chroot() {
+    # FIXME use in new bash (sourcing this file without executing main?)
     if has arch-chroot; then
-	arch-chroot /mnt
+	sudo arch-chroot /mnt
     else
-	env chroot /mnt
+	sudo env chroot /mnt
     fi
 }
 
 function use_my_bashrc() {
+    # FIXME seems to immediately 'exit'
     bash --rcfile <(wget -q -O - "$BASHRC_URL")
 }
 
@@ -138,4 +179,12 @@ function main() {
 set -e
 set -o pipefail
 
-main
+if [[ "$1" = '--help' ]]; then
+    print_usage
+elif [[ -n "$1" ]]; then
+    eval "$1"
+else
+    main
+fi
+
+# sync && exit
