@@ -52,7 +52,6 @@ function has() {
     type "$1" > /dev/null 2>&1
 }
 
-
 function in_X() {
     test -n "$DISPLAY"
 }
@@ -100,6 +99,12 @@ function use_external_screen_if_available() {
     fi
 }
 
+function append_once() {
+    FILE="$1"
+    LINE="$2"
+    grep -q -F "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
+}
+
 function mount_partitions() {
     lsblk --fs
     if sudo cryptsetup status "$LUKS_VOLUME" | grep 'inactive'; then
@@ -108,16 +113,15 @@ function mount_partitions() {
     fi
     sudo mount "$ROOT_PARTITION" /mnt
     sudo mount "$BOOT_PARTITION" /mnt/boot
-    sudo mount -o bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
+    sudo mount -o bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars # this is the fix if grub-install fails with "efibootmgr failed to register the boot entry: no such file or directory"
     sudo mount "$EFI_PARTITION" /mnt/boot/efi
     sudo mount "$HOME_PARTITION" /mnt/home
-    for d in dev proc run sys; do
+    for d in dev proc run sys; do # this is the fix if chroot fails with some warnings about /dev/fd/63 or so, does not have a correct PATH and is generally weird.
 	sudo mount -o bind "/$d" "/mnt/$d"
     done
     lsblk --fs
 }
 
-# FIXME
 function reinstall_grub() {
     # The grub2-mkconfig comman creates a new configuration based on the currently running system. It collects information from the /boot partition (or directory), from the /etc/default/grub file, and the customizable scripts in /etc/grub.d.
     # The configuration format is changing with time, and a new configuration file can become slightly incompatible with the older versions of the bootloader. Always run grub2-install before you create the configuration file with grub2-mkconfig.
@@ -127,6 +131,7 @@ function reinstall_grub() {
     # First, we should look at how the GRUB menu entries are stored. The usual way is to keep definitions of entries in the /boot/grub2/grub.cfg file in the menuentry blocks. However, Fedora 30 adopted the BootLoaderSpec (BLS) specification, which demands keeping each entry definition in a separate file. We can find these files in the /boot/loader/entries folder.
     #
     # On Fedora, `grubby` was used for a while to manage GRUB menu entries. But it's deprecated and unmaintained now.
+    # I'm doing stuff manually as described below.
 
     SYSTEM_CONFIG_FILE="/etc/default/grub"
     # GRUB_CONFIG_FILE="/boot/grub/grub.cfg" # what a pitfall
@@ -142,8 +147,9 @@ function reinstall_grub() {
     # force flag to ignore warning about only working when safe boot is disabled
     eval "$GRUB_INSTALL_BINARY" --target=x86_64-efi --bootloader-id=grub_uefi --recheck --force
 
-    # vim "$SYSTEM_CONFIG_FILE"
-    ## GRUB_ENABLE_BLSCFG="true"
+    # vi "$SYSTEM_CONFIG_FILE"
+    DISABLE_BSL_LINE='GRUB_ENABLE_BLSCFG="false"' # disable BootLoaderSpec (dynamic usage of /boot/loader/entries) and have static GRUB entries instead
+    append_once "$SYSTEM_CONFIG_FILE" "$DISABLE_BSL_LINE"
 
     # cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo # necessary on Arch Linux?
     #
