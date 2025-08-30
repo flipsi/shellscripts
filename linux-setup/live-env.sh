@@ -6,8 +6,8 @@
 # Usage:
 #     wget -q -O - "$SELF_URL" | bash
 
-SELF_NAME='live-env.sh'
-SELF_URL="https://github.com/flipsi/shellscripts/tree/master/linux-setup/$SELF_NAME"
+# SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/live-env.sh'
+SELF_URL='https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/live-env.sh'
 
 KEYBOARD_LAYOUT='us -variant norman'
 EXTERNAL_SCREEN_ROTATION='left'
@@ -23,7 +23,7 @@ HOME_PARTITION='/dev/$LUKS_GROUP/home'
 
 
 function download_self() {
-    wget -q -O "$SELF_NAME" "$SELF_URL"
+    wget "$SELF_URL"
 }
 
 function has() {
