@@ -145,8 +145,9 @@ function reinstall_grub() {
     # vim "$SYSTEM_CONFIG_FILE"
     ## GRUB_ENABLE_BLSCFG="true"
 
+    # cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo # necessary on Arch Linux?
+    #
     # generate grub configuration on boot partition
-    cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
     eval "$GRUB_MKCONFIG_BINARY" -o "$GRUB_CONFIG_FILE"
 }
 
