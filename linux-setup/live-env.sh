@@ -26,8 +26,9 @@ EOF
 # https://www.baeldung.com/linux/grub-menu-management
 
 
-# SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/live-env.sh'
-SELF_URL='https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/live-env.sh'
+SELF_NAME='live-env.sh'
+# SELF_URL='https://github.com/flipsi/shellscripts/tree/master/linux-setup/$SELF_NAME'
+SELF_URL="https://raw.githubusercontent.com/flipsi/shellscripts/master/linux-setup/$SELF_NAME"
 
 BASHRC_URL='https://raw.githubusercontent.com/flipsi/dotfiles/master/bash/bashrc_sflip'
 
@@ -45,7 +46,8 @@ HOME_PARTITION="/dev/$LUKS_GROUP/home"
 
 
 function download_self() {
-    wget "$SELF_URL"
+    wget -O "$SELF_NAME" "$SELF_URL"
+    chmod u+x "$SELF_NAME"
 }
 
 function has() {
@@ -122,16 +124,25 @@ function mount_partitions() {
     lsblk --fs
 }
 
+function chroot() {
+    # FIXME use in new bash (sourcing this file without executing main?)
+    if has arch-chroot; then
+	sudo arch-chroot /mnt
+    else
+	sudo env chroot /mnt
+    fi
+}
+
 function reinstall_grub() {
+    # The bootloader and boot manager is managed from within a Linux distro. On a multi boot system, you've got to make a decision, which: Maybe the one with the newest grub? In my case, Fedora (not Arch) on frey (even if it doesn't detect Arch correctly, but the distro is currently brokey anyway.
+    # So in particular, this function is meant to executed after having mounted Fedora and done chroot.
+    #
     # The grub2-mkconfig comman creates a new configuration based on the currently running system. It collects information from the /boot partition (or directory), from the /etc/default/grub file, and the customizable scripts in /etc/grub.d.
     # The configuration format is changing with time, and a new configuration file can become slightly incompatible with the older versions of the bootloader. Always run grub2-install before you create the configuration file with grub2-mkconfig.
-    #
     # Under EFI, GRUB2 looks for its configuration in /boot/efi/EFI/fedora/grub.cfg, however the postinstall script of grub2-common installs a small shim which chains to the standard configuration at /boot/grub2/grub.cfg.
     #
     # First, we should look at how the GRUB menu entries are stored. The usual way is to keep definitions of entries in the /boot/grub2/grub.cfg file in the menuentry blocks. However, Fedora 30 adopted the BootLoaderSpec (BLS) specification, which demands keeping each entry definition in a separate file. We can find these files in the /boot/loader/entries folder.
-    #
-    # On Fedora, `grubby` was used for a while to manage GRUB menu entries. But it's deprecated and unmaintained now.
-    # I'm doing stuff manually as described below.
+    # Further, on Fedora, `grubby` was used for a while to manage GRUB menu entries. But it's deprecated and unmaintained now. I'm doing stuff manually as described below without grubby.
 
     SYSTEM_CONFIG_FILE="/etc/default/grub"
     # GRUB_CONFIG_FILE="/boot/grub/grub.cfg" # what a pitfall
@@ -165,15 +176,6 @@ function setup() {
     set_keyboard_layout
 }
 
-function chroot() {
-    # FIXME use in new bash (sourcing this file without executing main?)
-    if has arch-chroot; then
-	sudo arch-chroot /mnt
-    else
-	sudo env chroot /mnt
-    fi
-}
-
 function use_my_bashrc() {
     # FIXME seems to immediately 'exit'
     bash --rcfile <(wget -q -O - "$BASHRC_URL")
@@ -183,6 +185,8 @@ function main() {
     download_self || true
     setup
     mount_partitions
+    # chroot # FIXME
+    # reinstall_grub # FIXME
     use_my_bashrc
 }
 
