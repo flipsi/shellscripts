@@ -86,12 +86,12 @@ function mount_partitions() {
 	# TODO: fix interactive password prompt (bash -i above seems not to be enough, this terminates with 'Nothing to read on input'
 	sudo cryptsetup open "$LUKS_PARTITION" "$LUKS_VOLUME"
     fi
-    mount "$ROOT_PARTITION" /mnt
-    mount "$BOOT_PARTITION" /mnt/boot
-    mount "$EFI_PARTITION" /mnt/boot/efi
-    mount "$HOME_PARTITION" /mnt/home
+    sudo mount "$ROOT_PARTITION" /mnt
+    sudo mount "$BOOT_PARTITION" /mnt/boot
+    sudo mount "$EFI_PARTITION" /mnt/boot/efi
+    sudo mount "$HOME_PARTITION" /mnt/home
     for d in dev proc run sys; do
-	mount -o bind "/$d" "/mnt/$d"
+	sudo mount -o bind "/$d" "/mnt/$d"
     done
     lsblk --fs
 }
