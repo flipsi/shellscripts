@@ -82,7 +82,10 @@ function use_external_screen_if_available() {
 
 function mount_partitions() {
     lsblk --fs
-    sudo cryptsetup open "$LUKS_PARTITION" "$LUKS_VOLUME"
+    if sudo cryptsetup status "$LUKS_VOLUME" | grep 'inactive'; then
+	# TODO: fix interactive password prompt (bash -i above seems not to be enough, this terminates with 'Nothing to read on input'
+	sudo cryptsetup open "$LUKS_PARTITION" "$LUKS_VOLUME"
+    fi
     mount "$ROOT_PARTITION" /mnt
     mount "$BOOT_PARTITION" /mnt/boot
     mount "$EFI_PARTITION" /mnt/boot/efi
