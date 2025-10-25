@@ -146,6 +146,8 @@ function main
 
 set -e
 
+## TODO screen brightness for separate outputs
+
 BL_DEVICE=$(find_file_by_pattern "/sys/class/backlight/*/brightness")
 BL_MAX=$(find_file_by_pattern "/sys/class/backlight/*/max_brightness")
 DEFAULT_STEP=300
