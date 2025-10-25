@@ -1,25 +1,5 @@
 #!/usr/bin/env bash
 
-# BL_DEVICE=/sys/class/backlight/*/brightness
-BL_DEVICE=/sys/class/backlight/intel_backlight/brightness
-BL_MAX=/sys/class/backlight/intel_backlight/max_brightness
-
-DEFAULT_STEP=100
-
-# the udev rule is only to be able to execute this without sudo
-# but it doesn't work (see FIXME below)
-
-UDEV_RULE_FILE=/etc/udev/rules.d/2041-allow-backlight-for-video-members
-
-# IFS='' read -r -d '' UDEV_RULE <<"EOF"
-# ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", GROUP="video", MODE="0664"
-# EOF
-
-IFS='' read -r -d '' UDEV_RULE <<"EOF"
-SUBSYSTEM=="backlight", ACTION=="add",
-RUN+="/bin/chgrp video /sys/class/backlight/intel_backlight/brightness",
-RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
-EOF
 
 function print_help
 {
@@ -35,17 +15,33 @@ function print_help
     echo "Example:"
     echo "  screen-brightness up 200    # Increase brightness by 200"
     echo "  screen-brightness down      # Decrease brightness by default step"
+    echo ""
+    echo "Don't invoke as superuser (with sudo), the script will do that implicitly as needed."
+}
+
+# Find file by pattern with wildcard, but return nothing in case of no results (instead of literal wildcard string)
+# E.g.   find_file_by_pattern "/foo/bar/*" => "/foo/bar/result_file"
+#        find_file_by_pattern "/foo/baz/*" => ""
+function find_file_by_pattern
+{
+    shopt -s nullglob # makes unmatched globs expand to nothing instead of staying as literal strings.
+    files=($1)
+    if (( ${#files[@]} )); then
+        echo "${files[@]}"
+    else
+        echo ""
+    fi
 }
 
 function has
 {
-  command -v "$1" >/dev/null 2>&1
+    command -v "$1" >/dev/null 2>&1
 }
 
 function check_backlight_device
 {
-    if [[ ! -f "$BL_DEVICE" ]]; then
-        echo "Device $BL_DEVICE does not exist, please adjust."
+    if [[ -z "$BL_DEVICE" ]]; then
+        echo "Backlight device not found."
         exit 1
    fi
 }
@@ -53,7 +49,7 @@ function check_backlight_device
 function add_user_to_video_group
 {
     if grep -q -v video <(groups); then
-        sudo usermod -a -G video flipsi
+        sudo usermod -a -G video "$USER"
         exec su -l "$USER" # reload groups in this shell
         USE_SUDO=1
     fi
@@ -61,6 +57,21 @@ function add_user_to_video_group
 
 function add_udev_rule
 {
+    # the udev rule is only to be able to execute this without sudo
+    # but it doesn't work (see FIXME below)
+
+    UDEV_RULE_FILE=/etc/udev/rules.d/2041-allow-backlight-for-video-members
+
+# IFS='' read -r -d '' UDEV_RULE <<"EOF"
+# ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", GROUP="video", MODE="0664"
+# EOF
+
+IFS='' read -r UDEV_RULE <<EOF
+SUBSYSTEM=="backlight", ACTION=="add",
+RUN+="/bin/chgrp video $BL_DEVICE",
+RUN+="/bin/chmod g+w $BL_DEVICE"
+EOF
+
     # sudo rm "$UDEV_RULE_FILE"
     if [[ ! -f "$UDEV_RULE_FILE" ]]; then
         echo "Creating $UDEV_RULE_FILE"
@@ -73,12 +84,14 @@ function add_udev_rule
 function adjust_directly_without_sudo
 {
     NEW_VALUE="$1"
+    echo "Setting brightness without sudo..."
     echo "$NEW_VALUE" > "$BL_DEVICE" # FIXME
 }
 
 function adjust_directly_with_sudo
 {
     NEW_VALUE="$1"
+    echo "Setting brightness with sudo..."
     echo "$NEW_VALUE" | sudo tee "$BL_DEVICE"
 }
 
@@ -132,4 +145,10 @@ function main
 }
 
 set -e
+
+BL_DEVICE=$(find_file_by_pattern "/sys/class/backlight/*/brightness")
+BL_MAX=$(find_file_by_pattern "/sys/class/backlight/*/max_brightness")
+DEFAULT_STEP=300
+
+
 main "$@"
