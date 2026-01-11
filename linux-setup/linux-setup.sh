@@ -200,14 +200,17 @@ function install_all_packages
         arandr \
         atool \
         audacity \
+        bash-completion \
         bluez blueman \
         bpytop \
         chromium \
+        cmake \
         cups cups-pdf \
         docker \
         docker-compose \
         elinks \
         eza \
+        fastfetch \
         fd \
         feh \
         fish \
@@ -216,6 +219,7 @@ function install_all_packages
         gimp \
         git-delta \
         git-revise \
+        gtk3 \
         highlight \
         htop \
         iproute \
@@ -229,6 +233,7 @@ function install_all_packages
         lshw \
         lynx \
         mediainfo \
+        meson \
         musescore \
         ncdu \
         neovim \
@@ -259,10 +264,12 @@ function install_all_packages
         shellcheck \
         shellcheck-sarif \
         sshfs \
+        sshpass \
         source-highlight \
         sox \
+        sqlite \
         syncthing \
-        texlive texlive-standalone latexmk \
+        texlive texlive-standalone latexmk texlive-synctex \
         the_silver_searcher \
         thunar \
         tig \
@@ -290,6 +297,7 @@ function install_all_packages
         com.slack.Slack \
         com.spotify.Client \
         com.vivaldi.Vivaldi \
+        io.github.nokse22.high-tide \
         org.telegram.desktop \
         org.signal.Signal
 
@@ -299,8 +307,8 @@ function install_all_packages
     sudo flatpak override com.vivaldi.Vivaldi --filesystem="$HOME/tmp"
 
     if [[ "$OS" = "Fedora Linux" ]]; then
-        # Note: If the `ip` command ("iproute" package) is not found, you have to run with sudo ;)
-        enable_copr_repo mamg22/nsxiv
+        # Note: If the `ip` or `ss` command ("iproute" package) is not found, you have to run with sudo ;)
+        # enable_copr_repo mamg22/nsxiv
         enable_copr_repo skidnik/clipmenu
         enable_copr_repo phrdina/cyrus-sasl-xoauth2
         install_packages \
@@ -332,7 +340,7 @@ function install_all_packages
 
     # pipx ensurepath
     # sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
-    
+
     # pipx install aider-install
     pipx install \
         goobook
