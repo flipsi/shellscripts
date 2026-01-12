@@ -36,8 +36,8 @@ function use_pacmd() {
     # TODO: also check whether pacmd is installed but prints "No PulseAudio daemon running"
 }
 
-TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-BEHRINGER_UMC1820}"
-TOGGLE_SINK_OPTION_2="${TOGGLE_SINK_OPTION_2:-DisplayLink_StarTech_DK31C3HDPD}"
+TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-bluez_output.C8_7B_23_51_76_9C.1}" # BOSE QC45 headset
+TOGGLE_SINK_OPTION_2="${TOGGLE_SINK_OPTION_1:-BEHRINGER_UMC1820}"
 
 
 function parse_arguments() {
