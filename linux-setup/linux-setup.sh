@@ -240,6 +240,7 @@ function install_all_packages
         neomutt mutt-wizard msmtp isync pass notmuch notmuch-mutt \
         net-tools \
         nginx \
+        nmap \
         notification-daemon \
         nsxiv \
         ntp \
