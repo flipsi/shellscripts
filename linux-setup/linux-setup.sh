@@ -316,6 +316,7 @@ function install_all_packages
             clipmenu \
             cyrus-sasl-xoauth2 \
             dex-autostart \
+            mpv \
             nsxiv \
             pipx \
             python3-speedtest-cli \
