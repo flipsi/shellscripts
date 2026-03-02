@@ -206,6 +206,7 @@ function install_all_packages
         chromium \
         cmake \
         cups cups-pdf \
+        diffpdf \
         docker \
         docker-compose \
         elinks \
