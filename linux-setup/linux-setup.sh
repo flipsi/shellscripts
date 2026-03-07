@@ -314,7 +314,7 @@ function install_all_packages
 
     if [[ "$OS" = "Fedora Linux" ]]; then
         # Note: If the `ip` or `ss` command ("iproute" package) is not found, you have to run with sudo ;)
-        # enable_copr_repo mamg22/nsxiv
+        # enable_copr_repo mamg22/nsxiv # 404 => dead? doesn't matter, I clone and build to configure anyway
         enable_copr_repo skidnik/clipmenu
         enable_copr_repo phrdina/cyrus-sasl-xoauth2
         install_packages \
@@ -555,6 +555,18 @@ function clone_and_install_dotfiles()
     fi
 }
 
+function clone_some_src()
+{
+    require ssh
+    require git
+    pushd "$HOME/src"
+    if ! test -d "$HOME/src/nsxiv"; then
+        git clone ssh://git@codeberg.org/flipsi/nsxiv.git --branch config/flipsi
+    fi
+    ## TODO:
+    # for repo in ? ? ?; do ...
+}
+
 function setup_fonts()
 {
     install_packages \
@@ -674,6 +686,7 @@ function main
     setup_ssh
     setup_fonts
     clone_and_install_dotfiles
+    clone_some_src
     setup_vim_and_neovim
     setup_password_store
     add_user_to_group_if_not_in_group docker
