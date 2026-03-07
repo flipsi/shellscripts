@@ -203,6 +203,10 @@ function install_all_packages
         bash-completion \
         bluez blueman \
         bpytop \
+        cargo \
+        openssl-devel \
+        alsa-lib-devel \
+        dbus-devel \
         chromium \
         cmake \
         cups cups-pdf \
@@ -348,6 +352,7 @@ function install_all_packages
     pipx install \
         goobook
 
+    cargo install spotify_player --locked
 }
 
 function update_firmware
