@@ -317,6 +317,7 @@ function install_all_packages
         enable_copr_repo skidnik/clipmenu
         enable_copr_repo phrdina/cyrus-sasl-xoauth2
         install_packages \
+            fontconfig-devel freetype-devel @development-tools libstdc++-static libstdc++-devel \
             clipmenu \
             cyrus-sasl-xoauth2 \
             dex-autostart \
@@ -353,6 +354,8 @@ function install_all_packages
         goobook
 
     cargo install spotify_player --locked
+    cargo install --git https://github.com/neovide/neovide
+
 }
 
 function update_firmware
@@ -562,6 +565,9 @@ function clone_some_src()
     pushd "$HOME/src"
     if ! test -d "$HOME/src/nsxiv"; then
         git clone ssh://git@codeberg.org/flipsi/nsxiv.git --branch config/flipsi
+    fi
+    if ! test -d "$HOME/src/neovide"; then
+        git clone https://github.com/neovide/neovide
     fi
     ## TODO:
     # for repo in ? ? ?; do ...
