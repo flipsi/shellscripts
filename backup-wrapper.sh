@@ -10,6 +10,10 @@ function require {
   }
 }
 
+function has() {
+    type "$1" > /dev/null 2>&1
+}
+
 server_mac_address='ac:1f:6b:b5:2d:42'
 server_name="verliernix"
 server_path="/mnt/zfs/flipsi"
@@ -23,8 +27,13 @@ function ping_server {
 }
 
 function wake_server {
-    require wakeonlan
-    wakeonlan "$server_mac_address" > /dev/null
+    if has wakeonlan; then
+        wakeonlan "$server_mac_address" > /dev/null
+    elif has wol; then
+        wol "$server_mac_address" > /dev/null
+    else
+        require wakeonlan
+    fi
 }
 
 function wait_for_server {
