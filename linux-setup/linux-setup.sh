@@ -202,7 +202,6 @@ function install_all_packages
         audacity \
         bash-completion \
         bluez blueman \
-        bpytop \
         cargo \
         openssl-devel \
         alsa-lib-devel \
@@ -338,7 +337,6 @@ function install_all_packages
             gnu-netcat \
             inetutils \
             mlocate \
-            pydf \
             python-pipx \
             wakeonlan \
             zsa-keymapp-bin
@@ -350,6 +348,8 @@ function install_all_packages
 
     # pipx install aider-install
     pipx install \
+        bpytop \
+        pydf \
         goobook
 
     cargo install spotify_player --locked
