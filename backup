@@ -312,4 +312,6 @@ DEST="${DEST%/}" # remove trailing slash if present
 mkdir -p "$LOG_DIR"
 touch "$LOG_FILE"
 exec > >(tee "$LOG_FILE") 2>&1 # log to both, stdout/stderr and log file
+test -n "$TMUX" && tmux rename-window "backup"
 _main
+test -n "$TMUX" && tmux rename-window "backup.done"
