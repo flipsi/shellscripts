@@ -299,6 +299,7 @@ function install_all_packages
 
     setup_flatpak
     install_with_flatpak  \
+        com.brave.Browser \
         com.slack.Slack \
         com.spotify.Client \
         com.vivaldi.Vivaldi \
