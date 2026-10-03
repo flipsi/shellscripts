@@ -5,6 +5,32 @@ server_name="verliernix"
 server_path="/mnt/zfs/flipsi"
 mountpoint="/mnt/verliernix-zfs-flipsi"
 
+function print_help_msg {
+    cat <<EOF
+Mount the $server_name fileserver via SSHFS (waking it up via WOL if necessary).
+
+Usage: mount-fileserver.sh [OPTIONS]
+
+    OPTIONS:
+    --help | -h        Don't do anything, just print this help message.
+
+EOF
+}
+
+function parse_arguments {
+    for i in "$@"; do
+        case $i in
+            -h|--help)
+                print_help_msg
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: ${i}"
+                exit 1
+                ;;
+        esac
+    done
+}
 
 function has {
     type "$1" > /dev/null 2>&1
@@ -55,6 +81,6 @@ function main {
 }
 
 set -e
+parse_arguments "$@"
 require sshfs
 main
-
