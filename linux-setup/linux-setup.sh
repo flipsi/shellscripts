@@ -624,7 +624,7 @@ function set_shell()
     sudo chsh -s "$PATH_TO_FISH" "$USER"
 }
 
-function ensure_environment() 
+function set_etc_environment()
 {
     local key="$1"
     local value="$2"
@@ -642,6 +642,13 @@ function ensure_environment()
     else
         echo "${key}=\"${value}\"" | sudo tee -a "$file" >/dev/null
     fi
+}
+
+function set_etc_environment_all
+{
+    set_etc_environment EDITOR '/usr/bin/nvim'
+    set_etc_environment BROWSER '/usr/bin/brave'
+    set_etc_environment GTK_THEME 'Adwaita:dark'
 }
 
 function setup_vim_and_neovim()
@@ -722,6 +729,7 @@ function main
     add_user_to_group_if_not_in_group docker
     add_user_to_group_if_not_in_group audio
     add_user_to_group_if_not_in_group video
+    set_etc_environment_all
     setup_printer
     sudo systemctl enable --now bluetooth.service
     sudo systemctl enable --now ntpd.service
