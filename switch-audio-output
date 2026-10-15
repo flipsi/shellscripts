@@ -36,7 +36,8 @@ function use_pacmd() {
     # TODO: also check whether pacmd is installed but prints "No PulseAudio daemon running"
 }
 
-TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-bluez_output.C8_7B_23_51_76_9C.1}" # BOSE QC45 headset
+# TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-bluez_output.C8_7B_23_51_76_9C.1}" # BOSE QC45 headset
+TOGGLE_SINK_OPTION_1="${TOGGLE_SINK_OPTION_1:-EC_66_D1_CF_2B_AC}" # Bower & Wilkins Px7 S3
 TOGGLE_SINK_OPTION_2="${TOGGLE_SINK_OPTION_2:-BEHRINGER_UMC1820}"
 
 
