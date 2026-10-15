@@ -226,7 +226,9 @@ function install_all_packages
         gtk3 \
         highlight \
         htop \
+        inxi \
         iproute \
+        iw \
         jq \
         keychain \
         kitty \
@@ -282,6 +284,7 @@ function install_all_packages
         tmux \
         translate-shell \
         trash-cli \
+        # unbuffered \
         unclutter-xfixes \
         unzip \
         urlscan \
@@ -619,6 +622,26 @@ function set_shell()
     require fish
     PATH_TO_FISH=$(type -p fish)
     sudo chsh -s "$PATH_TO_FISH" "$USER"
+}
+
+function ensure_environment() 
+{
+    local key="$1"
+    local value="$2"
+    local file="/etc/environment"
+
+    if [[ -z "$key" || -z "$value" ]]; then
+        echo "usage: ensure_env_key KEY VALUE" >&2
+        return 1
+    fi
+
+    sudo touch "$file"
+
+    if sudo grep -qE "^${key}=" "$file"; then
+        sudo sed -i "s|^${key}=.*|${key}=\"${value}\"|" "$file"
+    else
+        echo "${key}=\"${value}\"" | sudo tee -a "$file" >/dev/null
+    fi
 }
 
 function setup_vim_and_neovim()
