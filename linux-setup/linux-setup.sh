@@ -388,7 +388,7 @@ function install_i3_desktop
         i3-wm i3lock polybar dmenu rofi rofi-pass \
         pipewire-audio pipewire-pulse wireplumber pavucontrol alsa-utils pamixer \
         python dbus-python \
-        libnotify notification-daemon \
+        libnotify notification-daemon dunst \
         picom redshift unclutter feh xfce4-screenshooter \
         xsel xclip clipmenu \
         cups cups-pdf \
