@@ -6,7 +6,7 @@ basecommand="$0"
 
 # set default settings
 _rofi () {
-	rofi -no-auto-select -i "$@"
+	rofi -sync -no-auto-select -i "$@"
 }
 
 _pwgen () {
