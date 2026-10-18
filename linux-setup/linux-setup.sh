@@ -654,6 +654,10 @@ function set_etc_environment_all
 function setup_vim_and_neovim()
 {
     install_packages neovim nodejs npm python python-pynvim ctags tree-sitter tree-sitter-cli
+    if [[ "$OS" = "Fedora Linux" ]]; then
+        install_packages python3-neovim
+    fi
+
     echo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim
     if test -f "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim; then
         echo_skipped "vim-plug already installed."
