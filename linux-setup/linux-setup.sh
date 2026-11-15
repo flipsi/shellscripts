@@ -251,6 +251,7 @@ function install_all_packages
         nsxiv \
         ntp \
         odt2txt \
+        okular \
         pandoc \
         pass \
         pdfgrep \
@@ -284,7 +285,6 @@ function install_all_packages
         tmux \
         translate-shell \
         trash-cli \
-        # unbuffered \
         unclutter-xfixes \
         unzip \
         urlscan \
@@ -299,6 +299,7 @@ function install_all_packages
         yt-dlp \
         zathura zathura-pdf-poppler poppler \
         zip
+        # unbuffered \
 
     setup_flatpak
     install_with_flatpak  \
