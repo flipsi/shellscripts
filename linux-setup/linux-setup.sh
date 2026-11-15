@@ -321,6 +321,7 @@ function install_all_packages
         # enable_copr_repo mamg22/nsxiv # 404 => dead? doesn't matter, I clone and build to configure anyway
         enable_copr_repo skidnik/clipmenu
         enable_copr_repo phrdina/cyrus-sasl-xoauth2
+        enable_copr_repo jdxcode/mise
         install_packages \
             fontconfig-devel freetype-devel @development-tools libstdc++-static libstdc++-devel \
             clipmenu \
@@ -330,7 +331,8 @@ function install_all_packages
             nsxiv \
             pipx \
             python3-speedtest-cli \
-            wol
+            wol \
+            mise
 
     elif [[ "$OS" = "Arch Linux" ]]; then
         install_i3_desktop
@@ -361,6 +363,9 @@ function install_all_packages
     cargo install spotify_player --locked
     cargo install --git https://github.com/neovide/neovide
 
+    # install_packages clojure
+    # mise use --global clojure@latest
+    # mise use --global babashka@latest
 }
 
 function update_firmware
